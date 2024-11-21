@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="ar">
+  <head>
+    <meta charset="utf-8">
+    <title>قائمة المباني</title>
+  </head>
+  <body>
+    <h1>قائمة المباني</h1>
+    <ul>
+      {% for building in buildings %}
+        <li>{{ building.name }} - {{ building.address }}</li>
+      {% endfor %}
+    </ul>
+  </body>
+</html>
