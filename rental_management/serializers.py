@@ -3,7 +3,7 @@ from rest_framework import serializers
 from .models import Building, Units, Invoice, LeaseContract, Tenant
 
 
-class BuildingUnitSerializer(serializers.ModelSerializer):
+class BuildingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Building
         fields = '__all__'

@@ -2,8 +2,8 @@ from rest_framework import viewsets, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from .models import Building, Unit, Tenant, LeaseContract, Invoice
-from .serializers import BuildingSerializer, UnitSerializer, TenantSerializer, LeaseContractSerializer, InvoiceSerializer
+from .models import Building,Tenant, LeaseContract, Invoice, Units
+from .serializers import BuildingSerializer, UnitsSerializer, TenantSerializer, LeaseContractSerializer, InvoiceSerializer
 
 class BuildingViewSet(viewsets.ModelViewSet):
     queryset = Building.objects.all()
@@ -11,8 +11,8 @@ class BuildingViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
 class UnitViewSet(viewsets.ModelViewSet):
-    queryset = Unit.objects.all()
-    serializer_class = UnitSerializer
+    queryset = Units.objects.all()
+    serializer_class = UnitsSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
@@ -32,12 +32,12 @@ class LeaseContractViewSet(viewsets.ModelViewSet):
     serializer_class = LeaseContractSerializer
     permission_classes = [IsAuthenticated]
 
-        def get_queryset(self):
-            queryset = super().get_queryset()
-            is_active = self.request.query_params.get('is_active')
-            if is_active is not None:
-                queryset = queryset.filter(is_active=is_active.lower() == 'true')
-                return queryset
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        is_active = self.request.query_params.get('is_active')
+        if is_active is not None:
+            queryset = queryset.filter(is_active=is_active.lower() == 'true')
+            return queryset
 
 class InvoiceViewSet(viewsets.ModelViewSet):
     queryset = Invoice.objects.all()
