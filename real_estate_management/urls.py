@@ -43,15 +43,9 @@ schema_view = get_schema_view(
     permission_classes=(AllowAny,),
 )
 
-router = DefaultRouter()
-router.register('buildings', BuildingViewSet, basename='building')
-router.register('units', UnitViewSet, basename='unit')
-router.register('tenants', TenantViewSet, basename='tenant')
-router.register('contracts', LeaseContractViewSet, basename='contract')
-router.register('invoices', InvoiceViewSet, basename='invoice')
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/', include(router.urls)),
+    path('api/', include('rental_management.urls')),
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
 ]
