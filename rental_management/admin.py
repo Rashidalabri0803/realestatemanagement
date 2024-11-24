@@ -18,10 +18,10 @@ class BuildingAdmin(admin.ModelAdmin):
 
 @admin.register(Unit)
 class UnitAdmin(admin.ModelAdmin):
-    list_display = ('number', 'building', 'unit_type', 'status', 'monthly_rent', 'image')
+    list_display = ('number', 'building', 'unit_type', 'status', 'monthly_rent', 'image_preview')
     list_filter = ('unit_type', 'status', 'building')
     search_fields = ('number', 'building__name')
-    
+    readonly_fields = ('image_preview',)
     def image_preview(self, obj):
         if obj.image:
             return f"<img src='{obj.image.url}' width='50' height='50'/>"
