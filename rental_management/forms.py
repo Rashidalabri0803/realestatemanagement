@@ -1,5 +1,5 @@
 from django import forms
-from .models import Building, Unit, Tenant, MaintenanceRequest, Expense, TenantBankAccount, RentReport, LeaseContract
+from .models import Building, Unit, Tenant, MaintenanceRequest, Expense, TenantBankAccount, RentReport
 
 class BuildingForm(forms.ModelForm):
     class Meta:

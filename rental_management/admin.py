@@ -3,7 +3,6 @@ from django.contrib import admin
 from .models import (
     Building,
     Expense,
-    LeaseContract,
     MaintenanceRequest,
     RentReport,
     Tenant,
@@ -69,8 +68,3 @@ class RentReportAdmin(admin.ModelAdmin):
     list_filter = ('building', 'generated_date')
     search_fields = ('building__name',)
     readonly_fields = ('generated_date',)
-
-@admin.register(LeaseContract)
-class LeaseContractAdmin(admin.ModelAdmin):
-    list_display = ('tenant', 'unit', 'start_date', 'end_date', 'is_active')
-    list_filter = ('is_active', 'start_date', 'end_date')

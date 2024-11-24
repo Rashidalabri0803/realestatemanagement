@@ -1,18 +1,25 @@
 from django.shortcuts import get_object_or_404, render
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import viewsets, status
+from rest_framework import status, viewsets
 from rest_framework.decorators import action
-from .models import Building, Invoice, LeaseContract, Tenant, Unit, MaintenanceRequest, Expense, TenantBankAccount, RentReport
+
+from .models import (
+    Building,
+    Expense,
+    MaintenanceRequest,
+    RentReport,
+    Tenant,
+    TenantBankAccount,
+    Unit,
+)
 from .serializers import (
     BuildingSerializer,
-    InvoiceSerializer,
-    LeaseContractSerializer,
+    ExpenseSerializer,
+    MaintenanceRequestSerializer,
+    RentReportSerializer,
+    TenantBankAccountSerializer,
     TenantSerializer,
     UnitSerializer,
-    MaintenanceRequestSerializer,
-    ExpenseSerializer,
-    TenantBankAccountSerializer,
-    RentReportSerializer
 )
 
 
@@ -95,18 +102,6 @@ class RentReportViewSet(viewsets.ModelViewSet):
         report = RentReport.objecst.create(building=building, total_income=total_income)
         serializer = self.get_serializer(report)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-class LeaseContractViewSet(viewsets.ModelViewSet):
-    queryset = LeaseContract.objects.all()
-    serializer_class = LeaseContractSerializer
-    filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['tenant', 'unit', 'is_active']
-
-class InvoiceViewSet(viewsets.ModelViewSet):
-    queryset = Invoice.objects.all()
-    serializer_class = InvoiceSerializer
-    filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['contract', 'is_paid']
 
 def building_list(request):
     buildings = Building.objects.all()
