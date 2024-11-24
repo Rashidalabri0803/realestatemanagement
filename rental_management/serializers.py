@@ -33,7 +33,7 @@ class UnitSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Unit
-        fields = ['id', 'building', 'unit_type', 'status', 'number', 'area', 'monthly_rent', 'image_url', 'created_at', 'updated_at']
+        fields = ['id', 'building', 'unit_type', 'status', 'number', 'area', 'monthly_rent', 'image_url']
 
     def get_image_url(self, obj):
         if obj.image:
