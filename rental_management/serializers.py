@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Building, Unit, Tenant, MaintenanceRequest,Expense,TenantBankAccount,RentReport
+from .models import Building, Unit, Tenant, MaintenanceRequest,Expense,TenantBankAccount,RentReport, LeaseContract, Invoice
 
 
 class BuildingSerializer(serializers.ModelSerializer):
@@ -59,6 +59,11 @@ class RentReportSerializer(serializers.ModelSerializer):
         model = RentReport
         fields = ['id', 'building', 'total_income', 'generated_date']
 
+    def validate_total_income(self, value):
+        if value <= 0:
+            raise serializers.ValidationError('إجمالي الدخل يجب أن يكون أكبر من الصفر')
+        return value
+
 class LeaseContractSerializer(serializers.ModelSerializer):
     tenant_name = serializers.CharField(source='tenant.full_name', read_only=True)
     unit_number = serializers.CharField(source='unit.number', read_only=True)
@@ -72,3 +77,9 @@ class InvoiceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Invoice
         fields = ['id', 'contract', 'contract_info', 'amount_due', 'due_date', 'is_paid', 'payment_date']
+
+class BuildingDetailsSerializer(serializers.ModelSerializer):
+    units = UnitSerializer(many=True, read_only=True)
+    class Meta:
+        model = Building
+        fields = ['id', 'name', 'address', 'description', 'units', 'created_at', 'updated_at']
