@@ -14,12 +14,16 @@ class Building(models.Model):
     def __str__(self):
         return self.name
 
+    class Meta:
+        verbose_name = _('مبنى')
+        verbose_name_plural = _('المباني')
+
 # نموذج الوحدة (مكتب، شقة، محل)
 class Unit(models.Model):
   UNIT_TYPE_CHOICES = [
     ('office', _('مكتب')),
     ('apartment', _('شقة')),
-    ('shope', _('متجر')),
+    ('shope', _('محل')),
   ]
   UNIT_TYPE_CHOICES = [
     ('avaliable', _('متاحة')),
@@ -39,6 +43,10 @@ updated_at = models.DateTimeField(auto_now=True, verbose_name=_('تاريخ ال
 def __str__(self):
     return f'{self.get_unit_type_display()} - {self.number}'
 
+class Meta:
+    verbose_name = _('وحدة')
+    verbose_name_plural = _('الوحدات')
+
 # نموذج المستأجر
 class Tenant(models.Model):
     full_name = models.CharField(max_length=200, verbose_name=_('الاسم الكامل'))
@@ -48,6 +56,65 @@ class Tenant(models.Model):
 
     def __str__(self):
         return self.full_name
+
+    class Meta:
+        verbose_name = _('مستأجر')
+        verbose_name_plural = _('المستأجرون')
+
+class MaintenanceRequest(models.Model):
+    unit = models.ForeignKey(Unit, on_delete=models.CASCADE, verbose_name=_('الوحدة'))
+    description = models.TextField(blank=True, null=True, verbose_name=_('تفاصيل المشكلة'))
+    request_date = models.DateField(auto_now_add=True, verbose_name=_('تاريخ الطلب'))
+    is_resolved = models.BooleanField(default=False, verbose_name=_('تمت معالجتها'))
+    resolved_date = models.DateField(blank=True, null=True, verbose_name=_('تاريخ المعالجة'))
+
+    def __str__(self):
+        return f'طلب صيانة - {self.unit.number}'
+
+    class Meta:
+        verbose_name = _('طلب صيانة')
+        verbose_name_plural = _('طلبات الصيانة')
+
+# نموذج المصاريف
+class Expense(models.Model):
+    building = models.ForeignKey(Building, on_delete=models.CASCADE, verbose_name=_('المبني'))
+    description = models.TextField(blank=True, null=True, verbose_name=_('وصف المصروف'))
+    amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_('المبلغ'))
+    date = models.DateField(verbose_name=_('تاريخ المصروف'))
+
+    def __str__(self):
+        return f'{self.description} - {self.amount}'
+
+    class Meta:
+        verbose_name = _('مصروف')
+        verbose_name_plural = _('المصاريف')
+
+# نموذج حساب بنكي للمستأجر
+class TenantBankAccount(models.Model):
+    tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE, verbose_name=_('المستأجر'))
+    bank_name = models.CharField(max_length=200, verbose_name=_('اسم البنك'))
+    account_number = models.CharField(max_length=200, verbose_name=_('رقم الحساب'))
+    iban = models.CharField(max_length=200, verbose_name=_('رقم الايبان'))
+
+    def __str__(self):
+        return f'حساب {self.tenant.full_name}'
+
+    class Meta:
+        verbose_name = _('حساب بنكي')
+        verbose_name_plural = _('الحسابات البنكية')
+
+# نموذج تقرير الإيجار
+class RentReport(models.Model):
+    building = models.ForeignKey(Building, on_delete=models.CASCADE, verbose_name=_('المبني'))
+    total_income = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_('إجمالي الدخل'))
+    generated_date = models.DateField(auto_now_add=True, verbose_name=_('تاريخ التقرير'))
+
+    def __str__(self):
+        return f'تقرير إيجار - {self.building.name}'
+
+    class Meta:
+        verbose_name = _('تقرير إيجار')
+        verbose_name_plural = _('تقارير الإيجار')
 
 # نموذج عقد الإيجار
 class LeaseContract(models.Model):
