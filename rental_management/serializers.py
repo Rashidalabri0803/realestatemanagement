@@ -1,13 +1,17 @@
 from rest_framework import serializers
 
-from .models import Building, Invoice, LeaseContract, Tenant, Unit
+from .models import Building, Unit, Tenant, MaintenanceRequest,Expense,TenantBankAccount,RentReport
 
 
 class BuildingSerializer(serializers.ModelSerializer):
+    total_units = serializers.SerializerMethodField()
     image_url = serializers.SerializerMethodField()
     class Meta:
         model = Building
-        fields = '__all__'
+        fields = ['id', 'name', 'address', 'description', 'image_url', 'total_units', 'created_at', 'updated_at']
+
+    def get_total_units(self, obj):
+        return obj.units.count()
 
     def get_image_url(self, obj):
         if obj.image:
@@ -19,7 +23,7 @@ class UnitSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Unit
-        fields = '__all__'
+        fields = ['id', 'building', 'building_name', 'unit_type', 'status', 'number', 'area', 'monthly_rent', 'image_url', 'created_at', 'updated_at']
 
     def get_image_url(self, obj):
         if obj.image:
@@ -29,7 +33,31 @@ class UnitSerializer(serializers.ModelSerializer):
 class TenantSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tenant
-        fields = '__all__'
+        fields = ['id', 'full_name', 'phone_number', 'email', 'description']
+
+class MaintenanceRequestSerializer(serializers.ModelSerializer):
+    unit_number = serializers.ReadOnlyField(source='unit.number')
+    class Meta:
+        model = MaintenanceRequest
+        fields = ['id', 'unit', 'unit_number', 'description', 'request_date', 'is_resolved', 'resolved_date']
+
+class ExpenseSerializer(serializers.ModelSerializer):
+    building_name = serializers.ReadOnlyField(source='building.name')
+    class Meta:
+        model = Expense
+        fields = ['id', 'building', 'building_name', 'description', 'amount', 'date']
+
+class TenantBankAccountSerializer(serializers.ModelSerializer):
+    tenant_name = serializers.ReadOnlyField(source='tenant.full_name')
+    class Meta:
+        model = TenantBankAccount
+        fields = ['id', 'tenant', 'tenant_name', 'bank_name', 'account_number', 'iban']
+
+class RentReportSerializer(serializers.ModelSerializer):
+    building_name = serializers.ReadOnlyField(source='building.name')
+    class Meta:
+        model = RentReport
+        fields = ['id', 'building', 'total_income', 'generated_date']
 
 class LeaseContractSerializer(serializers.ModelSerializer):
     tenant_name = serializers.CharField(source='tenant.full_name', read_only=True)
