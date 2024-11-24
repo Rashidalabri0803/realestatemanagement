@@ -1,6 +1,15 @@
 from django.contrib import admin
 
-from .models import Building, LeaseContract, Tenant, TenantBankAccount, Expense, RentReport, Unit, MaintenanceRequest, Invoice
+from .models import (
+    Building,
+    Expense,
+    LeaseContract,
+    MaintenanceRequest,
+    RentReport,
+    Tenant,
+    TenantBankAccount,
+    Unit,
+)
 
 
 @admin.register(Building)
