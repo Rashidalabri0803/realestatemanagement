@@ -1,19 +1,30 @@
 from rest_framework import serializers
 
-from .models import Building, Units, Invoice, LeaseContract, Tenant
+from .models import Building, Invoice, LeaseContract, Tenant, Unit
 
 
 class BuildingSerializer(serializers.ModelSerializer):
+    image_url = serializers.SerializerMethodField()
     class Meta:
         model = Building
         fields = '__all__'
 
-class UnitsSerializer(serializers.ModelSerializer):
-    building_name = serializers.CharField(source='building.name', read_only=True)
+    def get_image_url(self, obj):
+        if obj.image:
+            return obj.image.url
+        return None
+
+class UnitSerializer(serializers.ModelSerializer):
+    image_url = serializers.SerializerMethodField()
     
     class Meta:
-        model = Units
-        fields = ['id', 'building', 'building_name', 'unit_type', 'number', 'area', 'monthly_rent', 'is_available']
+        model = Unit
+        fields = '__all__'
+
+    def get_image_url(self, obj):
+        if obj.image:
+            return obj.image.url
+        return None
 
 class TenantSerializer(serializers.ModelSerializer):
     class Meta:
