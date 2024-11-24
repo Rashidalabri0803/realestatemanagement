@@ -101,14 +101,12 @@ class LeaseContractViewSet(viewsets.ModelViewSet):
     serializer_class = LeaseContractSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['tenant', 'unit', 'is_active']
-    permission_classes = [IsAuthenticated]
 
 class InvoiceViewSet(viewsets.ModelViewSet):
     queryset = Invoice.objects.all()
     serializer_class = InvoiceSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['contract', 'is_paid']
-    permission_classes = [IsAuthenticated]
 
 def building_list(request):
     buildings = Building.objects.all()

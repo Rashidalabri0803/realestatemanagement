@@ -21,7 +21,7 @@ class BuildingSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'address', 'description', 'image_url', 'total_units', 'created_at', 'updated_at']
 
     def get_total_units(self, obj):
-        return obj.units.count()
+        return obj.unit_set.count()
 
     def get_image_url(self, obj):
         if obj.image:
@@ -33,7 +33,7 @@ class UnitSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Unit
-        fields = ['id', 'building', 'building_name', 'unit_type', 'status', 'number', 'area', 'monthly_rent', 'image_url', 'created_at', 'updated_at']
+        fields = ['id', 'building', 'unit_type', 'status', 'number', 'area', 'monthly_rent', 'image_url']
 
     def get_image_url(self, obj):
         if obj.image:
