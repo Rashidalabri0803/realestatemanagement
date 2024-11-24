@@ -1,6 +1,16 @@
 from rest_framework import serializers
 
-from .models import Building, Unit, Tenant, MaintenanceRequest,Expense,TenantBankAccount,RentReport, LeaseContract, Invoice
+from .models import (
+    Building,
+    Expense,
+    Invoice,
+    LeaseContract,
+    MaintenanceRequest,
+    RentReport,
+    Tenant,
+    TenantBankAccount,
+    Unit,
+)
 
 
 class BuildingSerializer(serializers.ModelSerializer):
