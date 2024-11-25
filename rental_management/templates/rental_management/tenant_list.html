@@ -1,0 +1,35 @@
+{% extends 'rental_management/base.html' %}
+
+{% block title %}قائمة المستأجرين{% endblock %}
+
+{% block content %}
+  <h1>قائمة المستأجرين</h1>
+  <a href="#" class="btn btn-primary">إضافة مستأجر جديد</a>
+  <br>
+  <br>
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>اسم المستأجر</th>
+        <th>رقم الهاتف</th>
+        <th>البريد الإلكتروني</th>
+        <th>إجراءات</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for tenant in tenants %}
+        <tr>
+          <td>{{ forloop.counter }}</td>
+          <td>{{ tenant.full_name }}</td>
+          <td>{{ tenant.phone_number }}</td>
+          <td>{{ tenant.email }}</td>
+          <td>
+            <a href="#" class="btn btn-warning">تعديل</a>
+            <a href="#" class="btn btn-danger">حذف</a>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}
