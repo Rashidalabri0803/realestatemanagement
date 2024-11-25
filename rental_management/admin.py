@@ -15,11 +15,12 @@ from .models import (
 class BuildingAdmin(admin.ModelAdmin):
     list_display = ('name', 'address', 'created_at', 'updated_at', 'image_preview')
     search_fields = ('name', 'address')
-    readonly_fields = ('created_at', 'updated_at', 'image_preview')
+    list_filter = ('created_at', 'updated_at')
+    readonly_fields = ('created_at', 'updated_at' , 'image_preview')
 
     def image_preview(self, obj):
         if obj.image:
-            return f"<img src='{obj.image.url}' width='50' height='50'/>"
+            return "<img src='{obj.image.url}' width='50' height='50' />"
         return "لا توجد صورة"
     image_preview.allow_tags = True
     image_preview.short_description = 'صورة المبني'
@@ -29,15 +30,15 @@ class UnitAdmin(admin.ModelAdmin):
     list_display = ('number', 'building', 'unit_type', 'status', 'monthly_rent', 'image_preview')
     list_filter = ('unit_type', 'status', 'building')
     search_fields = ('number', 'building__name')
-    readonly_fields = ('image_preview',)
+    readonly_fields = ('created_at', 'updated_at', 'image_preview')
+
     def image_preview(self, obj):
         if obj.image:
-            return f"<img src='{obj.image.url}' width='50' height='50'/>"
+            return f"<img src='{obj.image.url}' width='50' height='50' />"
         return "لا توجد صورة"
     image_preview.allow_tags = True
     image_preview.short_description = 'صورة الوحدة'
-
-
+    
 @admin.register(Tenant)
 class TenantAdmin(admin.ModelAdmin):
     list_display = ('full_name', 'phone_number', 'email')
@@ -47,7 +48,7 @@ class TenantAdmin(admin.ModelAdmin):
 @admin.register(MaintenanceRequest)
 class MaintenanceRequestAdmin(admin.ModelAdmin):
     list_display = ('unit', 'description', 'request_date', 'is_resolved', 'resolved_date')
-    list_filter = ('unit__building', 'unit__unit_type', 'is_resolved')
+    list_filter = ('is_resolved', 'request_date', 'resolved_date')
     search_fields = ('unit__number', 'description')
     readonly_fields = ('request_date',)
 
