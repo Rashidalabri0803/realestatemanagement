@@ -82,7 +82,7 @@ class ExpenseViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['building', 'date']
 
-        building = get_object_or_404(Building, pk=building_id)
-        report = RentReport.objects.create(building=building, total_income=total_income)
-        serializer = self.get_serializer(report)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    building = get_object_or_404(Building, pk=building_id)
+    report = RentReport.objects.create(building=building, total_income=total_income)
+    serializer = self.get_serializer(report)
+    return Response(serializer.data, status=status.HTTP_201_CREATED)
