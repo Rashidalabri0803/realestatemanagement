@@ -97,6 +97,10 @@ class Payment(models.Model):
     def __str__(self):
         return f'دفعة: {self.contract} - {self.amount}'
 
+    class Meta:
+        verbose_name = _('دفعة')
+        verbose_name_plural = _('الدفعات')
+
 class MaintenanceRequest(models.Model):
     unit = models.ForeignKey(Unit, on_delete=models.CASCADE, verbose_name=_('الوحدة'))
     description = models.TextField(verbose_name=_('تفاصيل المشكلة'))
