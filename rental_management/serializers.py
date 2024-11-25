@@ -19,7 +19,7 @@ class BuildingSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Building
-        fields = ('id', 'name', 'address', 'descriptin', 'image_url', 'total_units', 'total_income', 'created_at', 'updated_at')
+        fields = ('id', 'name', 'address', 'description', 'image_url', 'total_units', 'total_income', 'created_at', 'updated_at')
 
     def get_total_units(self, obj):
         return obj.unit_set.count()
