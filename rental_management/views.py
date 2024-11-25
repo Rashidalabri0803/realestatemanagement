@@ -17,8 +17,6 @@ from .serializers import (
     BuildingSerializer,
     ExpenseSerializer,
     MaintenanceRequestSerializer,
-    RentReportSerializer,
-    TenantBankAccountSerializer,
     TenantSerializer,
     UnitSerializer,
 )
@@ -83,23 +81,6 @@ class ExpenseViewSet(viewsets.ModelViewSet):
     serializer_class = ExpenseSerializer
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['building', 'date']
-
-class TenantBankAccountViewSet(viewsets.ModelViewSet):
-    queryset = TenantBankAccount.objects.all()
-    serializer_class = TenantBankAccountSerializer
-
-class RentReportViewSet(viewsets.ModelViewSet):
-    queryset = RentReport.objects.all()
-    serializer_class = RentReportSerializer
-    filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['building', 'generated_date']
-
-    @action(detail=False, methods=['get'])
-    def generate_report(self, request):
-        building_id = request.data.get('building_id')
-        total_income = request.data.get('total_income')
-        if not building_id or not total_income:
-            return Response({'error': 'يجب تقديم معلومات المبني والدخل الإجمالي'}, status=status.HTTP_400_BAD_REQUEST)
 
         building = get_object_or_404(Building, pk=building_id)
         report = RentReport.objects.create(building=building, total_income=total_income)
