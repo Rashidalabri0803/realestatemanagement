@@ -1,5 +1,7 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from django.utils.timezone import now
+from datetime import datetime
 
 
 class Building(models.Model):
@@ -9,6 +11,9 @@ class Building(models.Model):
     image = models.ImageField(upload_to='building_images/', blank=True, null=True, verbose_name=_('صورة المبني'))
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('تاريخ الإنشاء'))
     updated_at = models.DateTimeField(auto_now=True, verbose_name=_('تاريخ التحديث'))
+
+    def total_units(self):
+        return self.unit_set.count()
 
     def __str__(self):
         return self.name
@@ -39,6 +44,9 @@ class Unit(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('تاريخ الإنشاء'))
     updated_at = models.DateTimeField(auto_now=True, verbose_name=_('تاريخ التحديث'))
 
+    def is_available(self):
+        return self.status == 'Available'
+
     def __str__(self):
         return f'{self.get_unit_type_display()} - {self.number}'
 
@@ -50,6 +58,7 @@ class Tenant(models.Model):
     full_name = models.CharField(max_length=200, verbose_name=_('الاسم الكامل'))
     phone_number = models.CharField(max_length=20, verbose_name=_('رقم الهاتف'))
     email = models.EmailField(blank=True, null=True, verbose_name=_('البريد الإلكتروني'))
+    description = models.TextField(blank=True, null=True, verbose_name=_('ملاحظات'))
 
     def __str__(self):
         return self.full_name
@@ -57,6 +66,36 @@ class Tenant(models.Model):
     class Meta:
         verbose_name = _('مستأجر')
         verbose_name_plural = _('المستأجرون')
+
+class LeaseContract(models.Model):
+    unit = models.ForeignKey(Unit, on_delete=models.CASCADE, verbose_name=_('الوحدة'))
+    tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE, verbose_name=_('المستأجر'))
+    start_date = models.DateField(verbose_name=_('تاريخ البدء'))
+    end_date = models.DateField(verbose_name=_('تاريخ الانتهاء'))
+    monthly_rent = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_('الإيجار الشهري'))
+    is_active = models.BooleanField(default=True, verbose_name=_('نشط'))
+
+    def remaining_days(self):
+        if self.end_date:
+            delta = self.end_date - now().date()
+            return delta.days
+        return None
+
+    def __str__(self):
+        return f'عقد إيجار: {self.unit} - {self.tenant}'
+
+    class Meta:
+        verbose_name = _('عقد إيجار')
+        verbose_name_plural = _('عقود الايجار')
+
+class Payment(models.Model):
+    contract = models.ForeignKey(LeaseContract, on_delete=models.CASCADE, verbose_name=_('العقد'))
+    amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_('المبلغ'))
+    payment_date = models.DateField(verbose_name=_('تاريخ الدفع'))
+    description = models.TextField(blank=True, null=True, verbose_name=_('الوصف'))
+
+    def __str__(self):
+        return f'دفعة: {self.contract} - {self.amount}'
 
 class MaintenanceRequest(models.Model):
     unit = models.ForeignKey(Unit, on_delete=models.CASCADE, verbose_name=_('الوحدة'))
@@ -66,7 +105,7 @@ class MaintenanceRequest(models.Model):
     resolved_date = models.DateField(blank=True, null=True, verbose_name=_('تاريخ المعالجة'))
 
     def __str__(self):
-        return f'{self.unit.number}'
+        return f'طلب صيانة - {self.unit.number}'
 
     class Meta:
         verbose_name = _('طلب صيانة')
@@ -79,11 +118,23 @@ class Expense(models.Model):
     date = models.DateField(verbose_name=_('تاريخ المصروف'))
 
     def __str__(self):
-        return self.description
+        return f'{self.description} - {self.amount}'
 
     class Meta:
         verbose_name = _('مصروف')
         verbose_name_plural = _('المصاريف')
+
+class Notifiction(models.Model):
+    message = models.TextField(verbose_name=_('الرسالة'))
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('تاريخ الإنشاء'))
+    is_read = models.BooleanField(default=False, verbose_name=_('مقروء'))
+
+    def __str__(self):
+        return f'إشعار: {self.message[:20]}...'
+
+    class Meta:
+        verbose_name = _('إشعار')
+        verbose_name_plural = _('الإشعارات')
 
 class TenantBankAccount(models.Model):
     tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE, verbose_name=_('المستأجر'))
