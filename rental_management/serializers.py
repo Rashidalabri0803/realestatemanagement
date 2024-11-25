@@ -20,7 +20,7 @@ class BuildingSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'address', 'total_units', 'image_url')
 
     def get_total_units(self, obj):
-        return obj.units.count()
+        return obj.unit_set.count()
 
     def get_image_url(self, obj):
         if obj.image:
@@ -43,7 +43,7 @@ class UnitSerializer(serializers.ModelSerializer):
 class TenantSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tenant
-        fields = ('id', 'full_name', 'phone_number', 'email', 'created_at', 'updated_at')
+        fields = ('id', 'full_name', 'phone_number', 'email', 'description')
 
 class MaintenanceRequestSerializer(serializers.ModelSerializer):
     unit_number = serializers.ReadOnlyField(source='unit.number')
