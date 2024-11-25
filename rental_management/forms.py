@@ -1,5 +1,6 @@
 from django import forms
-from .models import Building, Unit, Tenant, MaintenanceRequest, Expense, TenantBankAccount, RentReport
+from django.utils.timezone import now
+from .models import Building, Unit, Tenant, LeaseContract, Payment, MaintenanceRequest, Expense
 
 class BuildingForm(forms.ModelForm):
     class Meta:
@@ -11,6 +12,12 @@ class BuildingForm(forms.ModelForm):
             'description': forms.Textarea(attrs={'rows': 5, 'placholder': 'وصف المبنى'}),
             'image': forms.FileInput(attrs={'class': 'form-control-file'}),
         }
+
+    def clean_name(self):
+        name = self.cleaned_data.get('name')
+        if Building.objects.filter(name=name).exists():
+            raise forms.ValidationError('اسم المبنى موجود بالفعل يرجي اختيار اسم اخر.')
+        return name
 
 class UnitForm(forms.ModelForm):
     class Meta:
@@ -26,6 +33,12 @@ class UnitForm(forms.ModelForm):
             'image': forms.FileInput(attrs={'class': 'form-control-file'}),
         }
 
+    def clean_area(self):
+        area = self.cleaned_data.get('area')
+        if area <= 10:
+            raise forms.ValidationError('مساحة الوحدة يجب أن تكون أكبر من 10 متر مربع.')
+        return area
+
 class TenantForm(forms.ModelForm):
     class Meta:
         model = Tenant
@@ -37,6 +50,49 @@ class TenantForm(forms.ModelForm):
             'description': forms.Textarea(attrs={'rows': 3}),
         }
 
+    def clean_phone_number(self):
+        phone_number = self.cleaned_data.get('phone_number')
+        if not phone_number.isdigit():
+            raise forms.ValidationError('رقم الهاتف يجب أن يحتوي على أرقام فقط.')
+        return phone_number
+
+class LeaseContractForm(forms.ModelForm):
+    class Meta:
+        model = LeaseContract
+        fields = ['unit', 'tenant', 'start_date', 'end_date', 'monthly_rent', 'is_active']
+        widgets = {
+            'unit': forms.Select(attrs={'class': 'form-control'}),
+            'tenant': forms.Select(attrs={'class': 'form-control'}),
+            'start_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'end_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'monthly_rent': forms.NumberInput(attrs={'class': 'form-control', 'placholder': 'الإيجار الشهري'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+
+    def clean_end_date(self):
+        start_date = self.cleaned_data.get('start_date')
+        end_date = self.cleaned_data.get('end_date')
+        if end_date <= start_date:
+            raise forms.ValidationError('تاريخ نهاية العقد يجب أن يكون أكبر من تاريخ البدء.')
+        return end_date
+
+class PaymentForm(forms.ModelForm):
+    class Meta:
+        model = Payment
+        fields = ['contract', 'amount', 'payment_date', 'description']
+        widgets = {
+            'contract': forms.Select(attrs={'class': 'form-control'}),
+            'amount': forms.NumberInput(attrs={'class': 'form-control', 'placholder': 'المبلغ'}),
+            'payment_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'description': forms.Textarea(attrs={'rows': 3, 'placholder': 'وصف الدفع'}),
+        }
+
+    def clean_amount(self):
+        amount = self.cleaned_data.get('amount')
+        if amount <= 0:
+            raise forms.ValidationError('المبلغ يجب أن يكون أكبر من صفر.')
+        return amount
+        
 class MaintenanceRequestForm(forms.ModelForm):
     class Meta:
         model = MaintenanceRequest
@@ -59,29 +115,3 @@ class ExpenseForm(forms.ModelForm):
             'amount': forms.NumberInput(attrs={'class': 'form-control', 'placholder': 'المبلغ'}),
             'date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
         }
-
-class TenantBankAccountForm(forms.ModelForm):
-    class Meta:
-        model = TenantBankAccount
-        fields = ['tenant', 'bank_name', 'account_number', 'iban']
-        widgets = {
-            'tenant': forms.Select(attrs={'class': 'form-control'}),
-            'bank_name': forms.TextInput(attrs={'class': 'form-control', 'placholder': 'اسم البنك'}),
-            'account_number': forms.TextInput(attrs={'class': 'form-control', 'placholder': 'رقم الحساب'}),
-            'iban': forms.TextInput(attrs={'class': 'form-control', 'placholder': 'رقم البنك الإيباني'}),
-        }
-
-class RentReportForm(forms.ModelForm):
-    class Meta:
-        model = RentReport
-        fields = ['building', 'total_income']
-        widgets = {
-            'building': forms.Select(attrs={'class': 'form-control'}),
-            'total_income': forms.NumberInput(attrs={'readonly': True}),
-        }
-
-    def clean_total_income(self):
-        total_income = self.cleaned_data['total_income']
-        if total_income <= 0:
-            raise forms.ValidationError("إجمالي الدخل يجب أن يكون أكبر من الصفر")
-        return total_income
