@@ -27,7 +27,13 @@
           <td>{{ contract.start_date }}</td>
           <td>{{ contract.end_date }}</td>
           <td>{{ contract.monthly_rent }}</td>
-          <td>{{ "نشط" if contract.is_active else "منتهي" }}</td>
+          <td>
+            {% if contract.is_active %}
+              <span class="badge bg-success">نشط</span>
+            {% else %}
+              <span class="badge bg-danger">منتهي</span>
+            {% endif %}
+          </td>
           <td>
           <a href="{% url 'lease_contract_edit' contract.id %}" class="btn btn-primary">تعديل</a>
           <a href="{% url 'lease_contract_delete' contract.id %}" class="btn btn-danger">حذف</a>
