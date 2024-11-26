@@ -26,7 +26,7 @@
       <td>{{ unit.building.name }}</td>
       <td>
         <a href="{% url 'unit_edit' unit.id %}" class="btn btn-info">تعديل</a>
-        <a href="{% url 'unit_delete' unit.id %}" class="btn btn-warning">حذف</a>
+        <a href="{% url 'unit_delete' unit.id %}" class="btn btn-danger btn-sm">حذف</a>
       </td>
     </tr>
     {% endfor %}
