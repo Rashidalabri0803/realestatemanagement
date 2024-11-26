@@ -4,7 +4,7 @@
 
 {% block content %}
   <h1>قائمة المستأجرين</h1>
-  <a href="#" class="btn btn-primary">إضافة مستأجر جديد</a>
+  <a href="{% url 'tenant_create' %}" class="btn btn-primary">إضافة مستأجر جديد</a>
   <br>
   <br>
   <table class="table table-striped">
@@ -25,8 +25,8 @@
           <td>{{ tenant.phone_number }}</td>
           <td>{{ tenant.email }}</td>
           <td>
-            <a href="#" class="btn btn-warning">تعديل</a>
-            <a href="#" class="btn btn-danger">حذف</a>
+            <a href="{% url 'tenant_edit' tenant.id %}" class="btn btn-warning btn-sm">تعديل</a>
+            <a href="{% url 'tenant_delete' tenant.id %}" class="btn btn-danger btn-sm">حذف</a>
           </td>
         </tr>
       {% endfor %}

@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block title %}الإشعارات{% endblock %}
+
+{% block content %}
+<h1>الإشعارات</h1>
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>الرسالة</th>
+      <th>تاريخ الإشعار</th>
+      <th>الحالة</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for notification in notifications %}
+    <tr>
+      <td>{{ forloop.counter }}</td>
+      <td>{{ notification.message }}</td>
+      <td>{{ notification.created_at }}</td>
+      <td>
+        {{ "مقروء" if notification.is_read else "غير مقروء" }}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
