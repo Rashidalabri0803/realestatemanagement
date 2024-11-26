@@ -35,8 +35,8 @@
             {% endif %}
           </td>
           <td>
-          <a href="{% url 'lease_contract_edit' contract.id %}" class="btn btn-primary">تعديل</a>
-          <a href="{% url 'lease_contract_delete' contract.id %}" class="btn btn-danger">حذف</a>
+          <a href="{% url 'leasecontract_edit' contract.id %}" class="btn btn-primary">تعديل</a>
+          <a href="{% url 'leasecontract_delete' contract.id %}" class="btn btn-danger">حذف</a>
           </td>
         </tr>
       {% endfor %}
