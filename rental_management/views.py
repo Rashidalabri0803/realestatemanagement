@@ -1,31 +1,40 @@
-from rest_framework import viewsets, status
-from rest_framework.response import Response
-from rest_framework.decorators import action
 from django.shortcuts import get_object_or_404
-from django_filters.rest_framework import DjangoFilterBackend
-from django_filters.filters import SearchFilter, OrderingFilter
 from django.urls import reverse_lazy
-from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
+from django.views.generic import (
+    CreateView,
+    DeleteView,
+    DetailView,
+    ListView,
+    UpdateView,
+)
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import status, viewsets
+from rest_framework.decorators import action
+from rest_framework.filters import OrderingFilter, SearchFilter
+from rest_framework.response import Response
+
 from .models import (
     Building,
-    Unit,
-    Tenant,
-    LeaseContract,
-    Payment,
-    MaintenanceRequest,
     Expense,
+    LeaseContract,
+    MaintenanceRequest,
     Notifiction,
+    Payment,
+    Tenant,
+    Unit,
 )
 from .serializers import (
     BuildingSerializer,
-    UnitSerializer,
-    TenantSerializer,
-    LeaseContractSerializer,
-    PaymentSerializer,
-    MaintenanceRequestSerializer,
     ExpenseSerializer,
+    LeaseContractSerializer,
+    MaintenanceRequestSerializer,
     NotifictionSerializer,
+    PaymentSerializer,
+    TenantSerializer,
+    UnitSerializer,
 )
+
+
 class BuildingViewSet(viewsets.ModelViewSet):
     queryset = Building.objects.all()
     serializer_class = BuildingSerializer
