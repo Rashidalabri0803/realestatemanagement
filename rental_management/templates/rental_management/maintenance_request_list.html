@@ -24,7 +24,13 @@
                     <td>{{ request.unit.number }}</td>
                     <td>{{ request.description }}</td>
                     <td>{{ request.request_date }}</td>
-                    <td>{{ "معالج" if request.is_resolved else "غير معالج" }}</td>
+                    <td>
+                        {% if request.is_processed %}
+                            <span class="badge bg-success">معالج</span>
+                        {% else %}
+                            <span class="badge bg-warning">قيد المعالج</span>
+                        {% endif %}
+                    </td>
                     <td>{{ request.resolved_date }}</td>
                     <td>
                         <a href="{% url 'maintenance_request_edit' request.id %}" class="btn btn-primary">تعديل</a>
