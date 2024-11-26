@@ -1,52 +1,35 @@
-from django.shortcuts import get_object_or_404
-from django.urls import reverse_lazy
-from django.views.generic import (
-    CreateView,
-    DeleteView,
-    DetailView,
-    ListView,
-    UpdateView,
-)
-from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import status, viewsets
-from rest_framework.decorators import action
-from rest_framework.filters import OrderingFilter, SearchFilter
+from rest_framework import viewsets, status
 from rest_framework.response import Response
-
-from .forms import (
-    BuildingForm,
-    ExpenseForm,
-    LeaseContractForm,
-    MaintenanceRequestForm,
-    TenantForm,
-    UnitForm,
-)
+from rest_framework.decorators import action
+from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
+from django_filters.filters import SearchFilter, OrderingFilter
+from django.urls import reverse_lazy
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from .models import (
     Building,
-    Expense,
-    LeaseContract,
-    MaintenanceRequest,
-    Notifiction,
-    Payment,
-    Tenant,
     Unit,
+    Tenant,
+    LeaseContract,
+    Payment,
+    MaintenanceRequest,
+    Expense,
+    Notifiction,
 )
 from .serializers import (
     BuildingSerializer,
-    ExpenseSerializer,
-    LeaseContractSerializer,
-    MaintenanceRequestSerializer,
-    NotifictionSerializer,
-    PaymentSerializer,
-    TenantSerializer,
     UnitSerializer,
+    TenantSerializer,
+    LeaseContractSerializer,
+    PaymentSerializer,
+    MaintenanceRequestSerializer,
+    ExpenseSerializer,
+    NotifictionSerializer,
 )
-
-
 class BuildingViewSet(viewsets.ModelViewSet):
     queryset = Building.objects.all()
     serializer_class = BuildingSerializer
-    filter_backends = [DjangoFilterBackend]
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['name', 'address']
     search_fields = ['name', 'address']
     ordering_fields = ['created_at', 'updated_at']
@@ -74,7 +57,7 @@ class BuildingViewSet(viewsets.ModelViewSet):
 class UnitViewSet(viewsets.ModelViewSet):
     queryset = Unit.objects.select_related('building').all()
     serializer_class = UnitSerializer
-    filter_backends = [DjangoFilterBackend]
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['building', 'unit_type', 'status']
     search_fields = ['number', 'building__name']
     ordering_fields = ['monthly_rent', 'area' , 'created_at']

@@ -1,7 +1,7 @@
+
 from django.db import models
-from django.utils.translation import gettext_lazy as _
 from django.utils.timezone import now
-from datetime import timedelta
+from django.utils.translation import gettext_lazy as _
 
 
 class Building(models.Model):
@@ -27,14 +27,14 @@ class Building(models.Model):
 
 class Unit(models.Model):
     UNIT_TYPE_CHOICES = (
-        ('Apartment', _('شقة')),
         ('Office', _('مكتب')),
+        ('Apartment', _('شقة')),
         ('Shop', _('محل')),
     )
     UNIT_STATUS_CHOICES = (
         ('Available', _('متاحة')),
-        ('Occupied', _('مؤجرة')),
-        ('Under Maintenance', _('تحت الصيانة')),
+        ('Rented', _('مؤجرة')),
+        ('Maintenance', _('تحت الصيانة')),
     )
     
     building = models.ForeignKey(Building, on_delete=models.CASCADE, verbose_name=_('المبنى'))
