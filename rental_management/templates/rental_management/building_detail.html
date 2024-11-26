@@ -1,0 +1,38 @@
+{% extends 'rental_management/base.html' %}
+
+{% block title %}تفاصيل المبني{% endblock %}
+
+{% block content %}
+<h1>تفاصيل المبني: {{ building.name }}</h1>
+<p>
+    <strong>العنوان:</strong> {{ building.address }}<br>
+    <strong>الوصف:</strong> {{ building.description }}<br>
+    <strong>تاريخ الإنشاء:</strong> {{ building.created_at }}<br>
+    <strong>تاريخ التحديث:</strong> {{ building.updated_at }}
+</p>
+<h2>الوحدات المرتبطة:</h2>
+<table class="table">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>رقم الوحدة</th>
+            <th>نوع الوحدة</th>
+            <th>الحالة</th>
+            <th>الإيجار الشهري</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for unit in building.unit_set.all %}
+        <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>{{ unit.number }}</td>
+            <td>{{ unit.get_unit_type_display }}</td>
+            <td>{{ unit.get_status_display }}</td>
+            <td>{{ unit.monthly_rent }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<a href="{% url 'building_edit' building.id %}" class="btn btn-warning">تعديل المبني</a>
+<a href="{% url 'building_delete' building.id %}" class="btn btn-danger">حذف المبني</a>
+{% endblock %}

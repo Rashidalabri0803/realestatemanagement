@@ -1,0 +1,35 @@
+{% extends 'rental_management/base.html' %}
+
+{% block title %}قائمة المصاريف{% endblock %}
+
+{% block content %}
+<h1>قائمة المصاريف</h1>
+<a href="{% url 'expense_create' %}" class="btn btn-primary">إضافة مصروف جديد</a>
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>المبني</th>
+      <th>الوصف</th>
+      <th>المبلغ</th>
+      <th>التاريخ</th>
+      <th>إجراءات</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for expense in expenses %}
+    <tr>
+      <td>{{ forloop.counter }}</td>
+      <td>{{ expense.building.name }}</td>
+      <td>{{ expense.description }}</td>
+      <td>{{ expense.amount }}</td>
+      <td>{{ expense.date }}</td>
+      <td>
+        <a href="{% url 'expense_edit' expense.id %}" class="btn btn-warning">تعديل</a>
+        <a href="{% url 'expense_delete' expense.id %}" class="btn btn-danger">حذف</a>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

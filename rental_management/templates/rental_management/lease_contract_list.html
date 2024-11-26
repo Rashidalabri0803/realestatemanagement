@@ -1,0 +1,39 @@
+{% extends 'rental_management/base.html' %}
+
+{% block title %}قائمة العقود{% endblock %}
+
+{% block content %}
+  <h1>قائمة العقود</h1>
+  <a href="{% url 'rental_management:lease_contract_create' %}" class="btn btn-success mb-3">إضافة عقد جديد</a>
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>الوحدة</th>
+        <th>المستأجر</th>
+        <th>تاريخ البدء</th>
+        <th>تاريخ الانتهاء</th>
+        <th>الايجار الشهري</th>
+        <th>الحالة</th>
+        <th>إجراءات</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for contract in contracts %}
+        <tr>
+          <td>{{ forloop.counter }}</td>
+          <td>{{ contract.unit.name }}</td>
+          <td>{{ contract.tenant.full_name }}</td>
+          <td>{{ contract.start_date }}</td>
+          <td>{{ contract.end_date }}</td>
+          <td>{{ contract.monthly_rent }}</td>
+          <td>{{ "نشط" if contract.is_active else "منتهي" }}</td>
+          <td>
+          <a href="{% url 'lease_contract_edit' contract.id %}" class="btn btn-primary">تعديل</a>
+          <a href="{% url 'lease_contract_delete' contract.id %}" class="btn btn-danger">حذف</a>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

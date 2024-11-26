@@ -289,3 +289,8 @@ class ExpenseDeleteView(DeleteView):
     model = Expense
     template_name = 'rental_management/expense_confirm_delete.html'
     success_url = reverse_lazy('expense_list')
+
+class NotifictionListView(ListView):
+    model = Notifiction
+    template_name = 'rental_management/notifiction_list.html'
+    context_object_name = 'notifictions'

@@ -1,0 +1,37 @@
+{% extends 'rental_management/base.html' %}
+
+{% block title %}طلبات الصيانة{% endblock %}
+
+{% block content %}
+    <h1>طلبات الصيانة</h1>
+    <a href="{% url 'maintenance_request_create' %}" class="btn btn-primary">إنشاء طلب جديد</a>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>الوحدة</th>
+                <th>الوصف</th>
+                <th>تاريخ الطلب</th>
+                <th>الحالة</th>
+                <th>تاريخ المعالجة</th>
+                <th>إجراءات</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for request in requests %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ request.unit.number }}</td>
+                    <td>{{ request.description }}</td>
+                    <td>{{ request.request_date }}</td>
+                    <td>{{ "معالج" if request.is_resolved else "غير معالج" }}</td>
+                    <td>{{ request.resolved_date }}</td>
+                    <td>
+                        <a href="{% url 'maintenance_request_edit' request.id %}" class="btn btn-primary">تعديل</a>
+                        <a href="{% url 'maintenance_request_delete' request.id %}" class="btn btn-danger">حذف</a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}
