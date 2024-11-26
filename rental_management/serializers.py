@@ -2,13 +2,13 @@ from rest_framework import serializers
 
 from .models import (
     Building,
-    Expense,
-    LeaseContract,
-    MaintenanceRequest,
-    Notifiction,
-    Payment,
-    Tenant,
     Unit,
+    Tenant,
+    LeaseContract,
+    Payment,
+    MaintenanceRequest,
+    Expense,
+    Notifiction,
 )
 
 
@@ -24,9 +24,8 @@ class BuildingSerializer(serializers.ModelSerializer):
     def get_total_units(self, obj):
         return obj.unit_set.count()
 
-    def get_total_income(self, obj):
-        contracts = LeaseContract.objects.filter(unit__building=obj)
-        return sum(contract.monthly_rent for contract in contracts)
+    def get_total_rent(self, obj):
+        return obj.totale_rent()
 
     def get_image_url(self, obj):
         if obj.image:
@@ -75,12 +74,22 @@ class LeaseContractSerializer(serializers.ModelSerializer):
     def get_remaining_days(self, obj):
         return obj.remaining_days()
 
+    def validate(self, data):
+        if data['end_date'] <= data['start_date']:
+            raise serializers.ValidationError('تاريخ الانتهاء يجب أن يكون أكبر من تاريخ البدء.')
+        return data
+
 class PaymentSerializer(serializers.ModelSerializer):
     contract_details = LeaseContractSerializer(source='contract', read_only=True)
 
     class Meta:
         model = Payment
         fields = ('id', 'contract', 'contract_details', 'amount', 'payment_date', 'description')
+
+    def validate_amount(self, value):
+        if value <= 0:
+            raise serializers.ValidationError('المبلغ يجب أن يكون أكبر من صفر.')
+        return value
         
 class MaintenanceRequestSerializer(serializers.ModelSerializer):
     unit_number = serializers.ReadOnlyField(source='unit.number')
@@ -93,6 +102,11 @@ class ExpenseSerializer(serializers.ModelSerializer):
     class Meta:
         model = Expense
         fields = ('id', 'building', 'building_name', 'description', 'amount', 'date')
+
+    def validate_amount(self, value):
+        if value <= 0:
+            raise serializers.ValidationError('المبلغ يجب أن يكون أكبر من صفر.')
+        return value
 
 class NotifictionSerializer(serializers.ModelSerializer):
     class Meta:
