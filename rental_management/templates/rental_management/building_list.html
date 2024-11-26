@@ -23,9 +23,9 @@
       <td>{{ building.address }}</td>
       <td>{{ building.unit_set.count }}</td>
       <td>
-        <a href="{% url 'building_detail' %}" class="btn btn-primary btn-sm">عرض</a>
-        <a href="{% url 'building_edit' %}" class="btn btn-warning btn-sm">تعديل</a>
-        <a href="{% url 'building_delete' %}" class="btn btn-danger btn-sm">حذف</a>
+        <a href="{% url 'building_detail' building.id %}" class="btn btn-primary btn-sm">عرض</a>
+        <a href="{% url 'building_edit' building.id %}" class="btn btn-warning btn-sm">تعديل</a>
+        <a href="{% url 'building_delete' building.id %}" class="btn btn-danger btn-sm">حذف</a>
       </td>
     </tr>
     {% endfor %}
