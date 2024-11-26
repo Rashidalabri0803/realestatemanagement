@@ -1,7 +1,7 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.utils.timezone import now
-from datetime import datetime
+from datetime import timedelta
 
 
 class Building(models.Model):
@@ -14,6 +14,9 @@ class Building(models.Model):
 
     def total_units(self):
         return self.unit_set.count()
+
+    def total_rent(self):
+        return sum(unit.monlthly_rent for unit in self.unit_set.filter(status='rented'))
 
     def __str__(self):
         return self.name
