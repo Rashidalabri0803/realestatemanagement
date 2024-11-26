@@ -2,7 +2,7 @@
 from django.db import models
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
-
+from datetime import timedelta
 
 class Building(models.Model):
     name = models.CharField(max_length=200, verbose_name=_('اسم المبني'))
@@ -18,12 +18,16 @@ class Building(models.Model):
     def total_rent(self):
         return sum(unit.monlthly_rent for unit in self.unit_set.filter(status='rented'))
 
+    def yearly_rent(self):
+        return self.total_rent() * 12
+
     def __str__(self):
         return self.name
 
     class Meta:
         verbose_name = _('مبنى')
         verbose_name_plural = _('المباني')
+        ordering = ['name']
 
 class Unit(models.Model):
     UNIT_TYPE_CHOICES = (
@@ -50,18 +54,27 @@ class Unit(models.Model):
     def is_available(self):
         return self.status == 'Available'
 
+    def yearly_rent(self):
+        return self.monthly_rent * 12
+
     def __str__(self):
         return f'{self.get_unit_type_display()} - {self.number}'
 
     class Meta:
         verbose_name = _('وحدة')
         verbose_name_plural = _('الوحدات')
+        indexes = [
+            models.Index(fields=['status', 'unit_type']),
+        ]
 
 class Tenant(models.Model):
     full_name = models.CharField(max_length=200, verbose_name=_('الاسم الكامل'))
     phone_number = models.CharField(max_length=20, verbose_name=_('رقم الهاتف'))
     email = models.EmailField(blank=True, null=True, verbose_name=_('البريد الإلكتروني'))
     description = models.TextField(blank=True, null=True, verbose_name=_('ملاحظات'))
+
+    def active_contracts(self):
+        return LeaseContract.objects.filter(tenant=self, is_active=True).count()
 
     def __str__(self):
         return self.full_name
@@ -84,12 +97,33 @@ class LeaseContract(models.Model):
             return delta.days
         return None
 
+    def is_due_soon(self):
+        remaining = self.remaining_days()
+        return remaining is not None and remaining <= 30
+
     def __str__(self):
         return f'عقد إيجار: {self.unit} - {self.tenant}'
 
     class Meta:
         verbose_name = _('عقد إيجار')
         verbose_name_plural = _('عقود الايجار')
+        ordering = ['-start_date']
+
+class AuditLog(models.Model):
+    action = models.CharField(max_length=200, verbose_name=_('الإجراء'))
+    model_name = models.CharField(max_length=200, verbose_name=_('اسم النموذج'))
+    object_id = models.PositiveIntegerField(verbose_name=_('معرف العنصر'))
+    user = models.CharFiel(max_length=200, verbose_name=_('المستخدم'))
+    timestamp = models.DateTimeField(auto_now_add=True, verbose_name=_('تاريخ الإجراء'))
+    details = models.TextField(blank=True, null=True, verbose_name=_('تفاصيل'))
+
+    def __str__(self):
+        return f'{self.action} - {self.model_name} - {self.timestamp}'
+
+    class Meta:
+        verbose_name = _('سجل')
+        verbose_name_plural = _('السجلات')
+        ordering = ['-timestamp']
 
 class Payment(models.Model):
     contract = models.ForeignKey(LeaseContract, on_delete=models.CASCADE, verbose_name=_('العقد'))
