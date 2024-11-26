@@ -113,7 +113,7 @@ class AuditLog(models.Model):
     action = models.CharField(max_length=200, verbose_name=_('الإجراء'))
     model_name = models.CharField(max_length=200, verbose_name=_('اسم النموذج'))
     object_id = models.PositiveIntegerField(verbose_name=_('معرف العنصر'))
-    user = models.CharFiel(max_length=200, verbose_name=_('المستخدم'))
+    user = models.CharField(max_length=200, verbose_name=_('المستخدم'))
     timestamp = models.DateTimeField(auto_now_add=True, verbose_name=_('تاريخ الإجراء'))
     details = models.TextField(blank=True, null=True, verbose_name=_('تفاصيل'))
 
