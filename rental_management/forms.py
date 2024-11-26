@@ -1,6 +1,6 @@
 from django import forms
 from django.utils.timezone import now
-from .models import Building, Unit, Tenant, LeaseContract, Payment, MaintenanceRequest, Expense
+from .models import Building, Unit, Tenant, LeaseContract, Payment, MaintenanceRequest, Expense, Notifiction
 
 class BuildingForm(forms.ModelForm):
     class Meta:
@@ -35,7 +35,7 @@ class UnitForm(forms.ModelForm):
 
     def clean_area(self):
         area = self.cleaned_data.get('area')
-        if area <= 10:
+        if area < 10:
             raise forms.ValidationError('مساحة الوحدة يجب أن تكون أكبر من 10 متر مربع.')
         return area
 
@@ -114,4 +114,18 @@ class ExpenseForm(forms.ModelForm):
             'description': forms.Textarea(attrs={'rows': 3, 'placholder': 'وصف المصروف'}),
             'amount': forms.NumberInput(attrs={'class': 'form-control', 'placholder': 'المبلغ'}),
             'date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+        }
+    def clean_amount(self):
+        amount = self.cleaned_data.get('amount')
+        if amount <= 0:
+            raise forms.ValidationError('المبلغ يجب أن يكون أكبر من صفر.')
+        return amount
+
+class NotifictionForm(forms.ModelForm):
+    class Meta:
+        model = Notifiction
+        fields = ['message', 'is_read']
+        widgets = {
+            'message': forms.Textarea(attrs={'rows': 3, 'placholder': 'نص الإشعار'}),
+            'is_read': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
