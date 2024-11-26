@@ -1,6 +1,16 @@
 from django import forms
-from django.utils.timezone import now
-from .models import Building, Unit, Tenant, LeaseContract, Payment, MaintenanceRequest, Expense, Notifiction
+
+from .models import (
+    Building,
+    Expense,
+    LeaseContract,
+    MaintenanceRequest,
+    Notifiction,
+    Payment,
+    Tenant,
+    Unit,
+)
+
 
 class BuildingForm(forms.ModelForm):
     class Meta:
