@@ -71,6 +71,8 @@ class Tenant(models.Model):
     full_name = models.CharField(max_length=200, verbose_name=_('الاسم الكامل'))
     phone_number = models.CharField(max_length=20, verbose_name=_('رقم الهاتف'))
     email = models.EmailField(blank=True, null=True, verbose_name=_('البريد الإلكتروني'))
+    id_card = models.CharField(max_length=50, blank=True, null=True, verbose_name=_('رقم الهوية'))
+    profile_picture = models.ImageField(upload_to='tenant_pictures/', blank=True, null=True, verbose_name=_('صورة المستأجر'))
     description = models.TextField(blank=True, null=True, verbose_name=_('ملاحظات'))
 
     def active_contracts(self):
