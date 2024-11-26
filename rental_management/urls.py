@@ -25,18 +25,18 @@ router.register('notifications', NotifictionViewSet, basename='notifications')
 
 urlpatterns = [
     path('api/', include(router.urls)),
-    path('buildings/', views.BuildingListView.as_view(), name='buildings'),
+    path('buildings/', views.BuildingListView.as_view(), name='building_list'),
     path('buildings/create/', views.BuildingCreateView.as_view(), name='building_create'),
     path('buildings/<int:pk>/', views.BuildingDetailView.as_view(), name='building_detail'),
     path('buildings/<int:pk>/edit/', views.BuildingUpdateView.as_view(), name='building_edit'),
     path('buildings/<int:pk>/delete/', views.BuildingDeleteView.as_view(), name='building_delete'),
 
-    path('units/', views.UnitListView.as_view(), name='units'),
+    path('units/', views.UnitListView.as_view(), name='units_list'),
     path('units/create/', views.UnitCreateView.as_view(), name='unit_create'),
     path('units/<int:pk>/edit/', views.UnitUpdateView.as_view(), name='unit_edit'),
     path('units/<int:pk>/delete/', views.UnitDeleteView.as_view(), name='unit_delete'),
 
-    path('tenants/', views.TenantListView.as_view(), name='tenants'),
+    path('tenants/', views.TenantListView.as_view(), name='tenants_list'),
     path('tenants/create/', views.TenantCreateView.as_view(), name='tenant_create'),
     path('tenants/<int:pk>/edit/', views.TenantUpdateView.as_view(), name='tenant_edit'),
     path('tenants/<int:pk>/delete/', views.TenantDeleteView.as_view(), name='tenant_delete'),
