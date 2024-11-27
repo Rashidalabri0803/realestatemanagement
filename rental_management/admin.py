@@ -9,13 +9,14 @@ from .models import (
     MaintenanceRequest,
     Expense,
     Notifiction,
+    Attachment,
     AuditLog,
 )
 
 
 @admin.register(Building)
 class BuildingAdmin(admin.ModelAdmin):
-    list_display = ('name', 'address', 'total_units', 'total_rent', 'created_at', 'image_preview')
+    list_display = ('name', 'address', 'total_units', 'total_rent', 'yearly_rent', 'image_preview', 'created_at')
     search_fields = ('name', 'address')
     list_filter = ('created_at', 'updated_at')
     readonly_fields = ('created_at', 'updated_at' , 'image_preview')
@@ -40,9 +41,9 @@ class BuildingAdmin(admin.ModelAdmin):
 
 @admin.register(Unit)
 class UnitAdmin(admin.ModelAdmin):
-    list_display = ('number', 'building', 'unit_type', 'status', 'monthly_rent', 'created_at', 'image_preview')
+    list_display = ('number', 'building', 'unit_type', 'status', 'monthly_rent', 'yearly_rent', 'image_preview')
     search_fields = ('number', 'building__name')
-    list_filter = ('unit_type', 'status', 'building')
+    list_filter = ('status', 'unit_type',  'building')
     readonly_fields = ('created_at', 'updated_at', 'image_preview')
 
     def yearly_rent(self, obj):
@@ -57,24 +58,31 @@ class UnitAdmin(admin.ModelAdmin):
     
 @admin.register(Tenant)
 class TenantAdmin(admin.ModelAdmin):
-    list_display = ('full_name', 'phone_number', 'email')
+    list_display = ('full_name', 'phone_number', 'email', 'active_contracts', 'overdue_payments', 'profile_picture_preview')
     search_fields = ('full_name', 'phone_number', 'email')
+    readonly_fields = ('profile_picture_preview',)
 
     def active_conracts(self, obj):
-        return LeaseContract.objects.filter(tenant=obj, is_active=True).count()
+        return obj.active_contracts()
     active_conracts.short_description = 'العقود النشطة'
 
+    def overdue_payments(self, obj):
+        return obj.overdue_payments()
+    overdue_payments.short_description = 'الدفعات المتأخرة'
+    
     def profile_picture_preview(self, obj):
         if obj.profile_picture:
             return format_html(f'<img src="{obj.profile_picture.url}" width="50" height="50" />')
         return "لا توجد صورة"
+    profile_picture_preview.short_description = 'صورة المستأجر'
     
 @admin.register(LeaseContract)
 class LeaseContractAdmin(admin.ModelAdmin):
-    list_display = ('unit', 'tenant', 'start_date', 'end_date', 'monthly_rent', 'is_active', 'remaining_days')
+    list_display = ('unit', 'tenant', 'start_date', 'end_date', 'monthly_rent', 'is_active', 'remaining_days', 'is_due_soon')
     list_filter = ('is_active', 'start_date', 'end_date')
     search_fields = ('unit__number', 'tenant__full_name')
     readonly_fields = ('remaining_days',)
+    actions = ['mark_contracts_terminated']
     
     def remaining_days(self, obj):
         days = obj.remaining_days()
@@ -87,6 +95,23 @@ class LeaseContractAdmin(admin.ModelAdmin):
         return "نعم" if obj.is_due_soon() else "لا"
     is_due_soon.short_description = 'سينتهي قريبا'
     is_due_soon.boolean = True
+
+    @admin.action(description='تعيين العقود كمنتهية')
+    def mark_contracts_terminated(self, request, queryset):
+        queryset.update(is_active=False)
+        self.messege_user(queryset, f'تم إنهاء {queryset.count()} عقد بنجاح. ')
+
+@admin.register(Attachment)
+class AttachmentAdmin(admin.ModelAdmin):
+    list_display = ('description', 'file', 'description')
+    search_fields = ('contract__id', 'description')
+    readonly_fields = ('file_preview',)
+
+    def file_preview(self, obj):
+        if obj.file:
+            return format_html(f"<a href="{obj.file.url}" target='_blank'>عرض الملف</a>")
+        return "لا توجد ملفات"
+    file_preview.short_description = 'عرض الملف'
 
 @admin.register(Payment)
 class PaymentAdmin(admin.ModelAdmin):
@@ -105,6 +130,7 @@ class MaintenanceRequestAdmin(admin.ModelAdmin):
     @admin.action(description='تحديد الطلبات كمعالجة')
     def mark_as_resolved(self, request, queryset):
         queryset.update(is_resolved=True)
+        self.messege_user(queryset, f'تم معالجة {queryset.count()} طلب بنجاح. ')
 
 @admin.register(Expense)
 class ExpenseAdmin(admin.ModelAdmin):
@@ -122,6 +148,7 @@ class NotifictionAdmin(admin.ModelAdmin):
     @admin.action(description='تحديد الإشعارات كمقروءة')
     def mark_as_read(self, request, queryset):
         queryset.update(is_read=True)
+        self.messege_user(queryset, f'تم تحديد {queryset.count()} إشعار كمقروء. ')
 
 @admin.register(AuditLog)
 class AuditLogAdmin(admin.ModelAdmin):
