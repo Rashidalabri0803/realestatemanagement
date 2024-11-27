@@ -1,0 +1,16 @@
+.admin-panel {
+  font-family: 'Tajawal', sans-serif;
+  background-color: #f8f9fa;
+}
+
+.admin-panel .btn {
+  border-radius: 8px;
+}
+
+.admin-panel .table th {
+  background-color: #343a40;
+  color: white;
+}
+.admin-panel .table td {
+  background-color: #ffffff;
+}

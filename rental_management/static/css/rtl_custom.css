@@ -30,6 +30,14 @@ body {
   border-color: #198754;
 }
 
-.navbar-nav .nav-link {
-  padding: 0.5rem 1rem;
+.navbar {
+  background-color: #343a40;
+  color: white;
+}
+
+.footer {
+  background-color: #212529;
+  color: #ffffff;
+  text-align: center;
+  padding: 1rem;
 }

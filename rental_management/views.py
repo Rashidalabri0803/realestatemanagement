@@ -30,6 +30,8 @@ from .models import (
     Payment,
     Tenant,
     Unit,
+    Attachment,
+    AuditLog,
 )
 from .serializers import (
     BuildingSerializer,
@@ -40,11 +42,12 @@ from .serializers import (
     PaymentSerializer,
     TenantSerializer,
     UnitSerializer,
+    AttachmentSerializer,
 )
 
 
 class BuildingViewSet(viewsets.ModelViewSet):
-    queryset = Building.objects.all()
+    queryset = Building.objects.prefetch_related('unit_set').all()
     serializer_class = BuildingSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['name', 'address']
@@ -57,19 +60,6 @@ class BuildingViewSet(viewsets.ModelViewSet):
         units = building.unit_set.all()
         serializer = UnitSerializer(units, many=True, context={'request': request})
         return Response(serializer.data)
-
-    @action(detail=False, methods=['get'])
-    def statistics(self, request):
-        total_buildings = Building.objects.count()
-        total_units = Unit.objects.count()
-        rented_units = Unit.objects.filter(status='rented').count()
-        available_units = Unit.objects.filter(status='available').count()
-        return Response({
-            'total_buildings': total_buildings,
-            'total_units': total_units,
-            'rented_units': rented_units,
-            'available_units': available_units,
-        })
 
 class UnitViewSet(viewsets.ModelViewSet):
     queryset = Unit.objects.select_related('building').all()
@@ -107,6 +97,12 @@ class LeaseContractViewSet(viewsets.ModelViewSet):
     search_fields = ['unit__number', 'tenant__full_name']
     ordering_fields = ['start_date', 'end_date']
 
+    @action(detail=False, methods=['get'])
+    def expired_contracts(self, request):
+        expired_contracts = LeaseContract.objects.filter(end_date__lt=now(), is_active=True)
+        serializer = self.get_serializer(expired_contracts, many=True, context={'request': request})
+        return Response(serializer.data)
+
     @action(detail=False, methods=['post'])
     def terminate_contract(self, request):
         contract_id = request.data.get('contract_id')
@@ -122,6 +118,20 @@ class PaymentViewSet(viewsets.ModelViewSet):
     filterset_fields = ['contract', 'payment_date']
     ordering_fields = ['payment_date' , 'amount']
 
+    @action(detail=False, methods=['get'])
+    def payment_statistics(self, request):
+        total_payments = Payment.objects.all().aggregate(total_amount=models.Sum('amount'))['total'] or 0
+        latest_payment = Payment.objects.latest('payment_date') if Payment.objects.all().exists() else None
+        latest_payment_data = {
+            'amount': latest_payment.amount,
+            'payment_date': latest_payment.payment_date,
+            'contract': latest_payment.contract.id,
+        } if latest_payment else None
+        return Response({
+            'total_payments': total_payments,
+            'latest_payment': latest_payment_data,
+        })
+
 class MaintenanceRequestViewSet(viewsets.ModelViewSet):
     queryset = MaintenanceRequest.objects.select_related('unit').all()
     serializer_class = MaintenanceRequestSerializer
@@ -135,12 +145,24 @@ class MaintenanceRequestViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(unresolved_requests, many=True, context={'request': request})
         return Response(serializer.data)
 
+    @action(detail=False, methods=['post'])
+    def bulk_resolve(self, request):
+        request_ids = request.data.get('request_ids', [])
+        MaintenanceRequest.objects.filter(id__in=request_ids).update(is_resolved=True)
+        return Response({'message': f'تم معالجة {len(request_ids)} طلب صيانة'}, status=status.HTTP_200_OK)
+
 class ExpenseViewSet(viewsets.ModelViewSet):
     queryset = Expense.objects.select_related('building').all()
     serializer_class = ExpenseSerializer
     filter_backends = [DjangoFilterBackend, OrderingFilter]
     filterset_fields = ['building', 'date']
-    ordering_fields = ['date', 'amount']
+    ordering_fields = ['amount', 'date']
+
+    @action(detail=True, methods=['get'])
+    def building_expenses(self, request, pk=None):
+        expenses = Expense.objects.filter(building_id=pk)
+        serializer = self.get_serializer(expenses, many=True, context={'request': request})
+        return Response(serializer.data)
 
 class NotifictionViewSet(viewsets.ModelViewSet):
     queryset = Notifiction.objects.all()
@@ -152,6 +174,13 @@ class NotifictionViewSet(viewsets.ModelViewSet):
     def mark_as_read(self, request):
         Notifiction.objects.update(is_read=True)
         return Response({'message': 'تم تحديد جميع الإشعارات كمقروءة .'}, status=status.HTTP_200_OK)
+
+class AttachmentViewSet(viewsets.ModelViewSet):
+    queryset = Attachment.objects.select_related('contract').all()
+    serializer_class = AttachmentSerializer
+    filter_backends = [DjangoFilterBackend, OrderingFilter]
+    search_fields = ['contract__id', 'description']
+    ordering_fields = ['contract', 'id']
         
 class BuildingListView(ListView):
     model = Building
