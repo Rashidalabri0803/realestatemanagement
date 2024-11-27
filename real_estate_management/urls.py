@@ -22,11 +22,11 @@ from django.contrib import admin
 
 schema_view = get_schema_view(
     openapi.Info(
-        title="Real Estate Management API",
+        title="واجهة برمجة تطبيقات إدارة العقارات",
         default_version='v1',
         description="واجهة برمجية لإدارة الإيجار",
         terms_of_service="https://www.google.com/policies/terms/",
-        contact=openapi.Contact(email="ejeyd@example.com"),
+        contact=openapi.Contact(email="rashid92759346@gmail.com"),
         license=openapi.License(name="BSD License"),
     ),
     public=True,
