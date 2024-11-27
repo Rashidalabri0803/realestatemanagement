@@ -111,6 +111,18 @@ class LeaseContract(models.Model):
         verbose_name_plural = _('عقود الايجار')
         ordering = ['-start_date']
 
+class Attachment(models.Model):
+    contract = models.ForeignKey(LeaseContract, on_delete=models.CASCADE, verbose_name=_('العقد'), related_name='attachments')
+    file = models.FileField(upload_to='attachments/', verbose_name=_('الملف'))
+    description = models.TextField(blank=True, null=True, verbose_name=_('وصف'))
+
+    def __str__(self):
+        return f'مرفق للعقد: {self.contract.id}'
+
+    class Meta:
+        verbose_name = _('مرفق')
+        verbose_name_plural = _('المرفقات')
+
 class AuditLog(models.Model):
     action = models.CharField(max_length=200, verbose_name=_('الإجراء'))
     model_name = models.CharField(max_length=200, verbose_name=_('اسم النموذج'))
