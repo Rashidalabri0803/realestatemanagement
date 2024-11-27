@@ -72,7 +72,7 @@ class TenantSerializer(serializers.ModelSerializer):
 
 class LeaseContractSerializer(serializers.ModelSerializer):
     unit_details = UnitSerializer(source='unit', read_only=True)
-    tenant_detaile = TenantSerializer(source='tenant', read_only=True)
+    tenant_details = TenantSerializer(source='tenant', read_only=True)
     remaining_days = serializers.SerializerMethodField()
 
     class Meta:
