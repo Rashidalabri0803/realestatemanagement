@@ -58,7 +58,7 @@ class UnitAdmin(admin.ModelAdmin):
     
 @admin.register(Tenant)
 class TenantAdmin(admin.ModelAdmin):
-    list_display = ('full_name', 'phone_number', 'email', 'active_contracts', 'overdue_payments', 'profile_picture_preview')
+    list_display = ('full_name', 'phone_number', 'email', 'active_contracts', 'profile_picture_preview')
     search_fields = ('full_name', 'phone_number', 'email')
     readonly_fields = ('profile_picture_preview',)
 
@@ -92,11 +92,11 @@ class LeaseContractAdmin(admin.ModelAdmin):
     remaining_days.short_description = 'الأيام المتبقية'
 
     def is_due_soon(self, obj):
-        return "نعم" if obj.is_due_soon() else "لا"
+        return obj.is_due_soon()
     is_due_soon.short_description = 'سينتهي قريبا'
     is_due_soon.boolean = True
 
-    @admin.action(description='تعيين العقود كمنتهية')
+    @admin.action(description='تحديد العقود كمنتهية')
     def mark_contracts_terminated(self, request, queryset):
         queryset.update(is_active=False)
         self.messege_user(queryset, f'تم إنهاء {queryset.count()} عقد بنجاح. ')
