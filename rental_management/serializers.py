@@ -26,7 +26,7 @@ class BuildingSerializer(serializers.ModelSerializer):
         return obj.unit_set.count()
 
     def get_total_rent(self, obj):
-        return obj.totale_rent()
+        return obj.total_rent()
 
     def get_yearly_rent(self, obj):
         return obj.yearly_rent()
