@@ -155,7 +155,7 @@ class Payment(models.Model):
 class MaintenanceRequest(models.Model):
     unit = models.ForeignKey(Unit, on_delete=models.CASCADE, verbose_name=_('الوحدة'))
     description = models.TextField(verbose_name=_('تفاصيل المشكلة'))
-    request_date = models.DateField(verbose_name=_('تاريخ الطلب'))
+    request_date = models.DateField(blank=True, null=True, verbose_name=_('تاريخ الطلب'))
     is_resolved = models.BooleanField(default=False, verbose_name=_('تمت معالجتها'))
     resolved_date = models.DateField(blank=True, null=True, verbose_name=_('تاريخ المعالجة'))
 
