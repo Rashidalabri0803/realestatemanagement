@@ -14,18 +14,22 @@ from .models import (
 
 class BuildingSerializer(serializers.ModelSerializer):
     total_units = serializers.SerializerMethodField()
-    total_income = serializers.SerializerMethodField()
+    total_rent = serializers.SerializerMethodField()
+    yearly_rent = serializers.SerializerMethodField()
     image_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Building
-        fields = ('id', 'name', 'address', 'description', 'image_url', 'total_units', 'total_income', 'created_at', 'updated_at')
+        fields = ('id', 'name', 'address', 'description', 'image_url', 'total_units', 'total_rent', 'yearly_rent', 'created_at', 'updated_at')
 
     def get_total_units(self, obj):
         return obj.unit_set.count()
 
     def get_total_rent(self, obj):
         return obj.totale_rent()
+
+    def get_yearly_rent(self, obj):
+        return obj.yearly_rent()
 
     def get_image_url(self, obj):
         if obj.image:
@@ -35,17 +39,21 @@ class BuildingSerializer(serializers.ModelSerializer):
 class UnitSerializer(serializers.ModelSerializer):
     building_name = serializers.ReadOnlyField(source='building.name')
     tenant_name = serializers.SerializerMethodField()
+    yearly_rent = serializers.SerializerMethodField()
     image_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Unit
-        fields = ('id', 'building', 'building_name', 'unit_type', 'status', 'number', 'area', 'monthly_rent', 'tenant_name', 'image_url', 'created_at', 'updated_at')
+        fields = ('id', 'building', 'building_name', 'unit_type', 'status', 'number', 'area', 'monthly_rent', 'yearly_rent', 'tenant_name', 'image_url', 'created_at', 'updated_at')
 
     def get_tenant_name(self, obj):
         contract = LeaseContract.objects.filter(unit=obj, is_active=True).first()
         if contract:
             return contract.tenant.full_name
         return 'غير مؤجرة'
+
+    def get_yearly_rent(self, obj):
+        return obj.building.yearly_rent()
 
     def get_image_url(self, obj):
         if obj.image:
@@ -57,19 +65,19 @@ class TenantSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Tenant
-        fields = ('id', 'full_name', 'phone_number', 'email', 'description', 'active_contracts')
+        fields = ('id', 'full_name', 'phone_number', 'email', 'id_card', 'profile_picture', 'description', 'active_contracts')
 
     def get_active_contracts(self, obj):
         return LeaseContract.objects.filter(tenant=obj, is_active=True).count()
 
 class LeaseContractSerializer(serializers.ModelSerializer):
     unit_details = UnitSerializer(source='unit', read_only=True)
-    tenant_name = serializers.ReadOnlyField(source='tenant.full_name')
+    tenant_detaile = TenantSerializer(source='tenant', read_only=True)
     remaining_days = serializers.SerializerMethodField()
 
     class Meta:
         model = LeaseContract
-        fields = ('id', 'unit', 'unit_details', 'tenant_name', 'start_date', 'end_date', 'monthly_rent', 'is_active', 'remaining_days')
+        fields = ('id', 'unit', 'unit_details', 'tenant', 'tenant_details', 'start_date', 'end_date', 'monthly_rent', 'is_active', 'remaining_days')
 
     def get_remaining_days(self, obj):
         return obj.remaining_days()
@@ -95,7 +103,13 @@ class MaintenanceRequestSerializer(serializers.ModelSerializer):
     unit_number = serializers.ReadOnlyField(source='unit.number')
     class Meta:
         model = MaintenanceRequest
-        fields = ('id', 'unit', 'unit_number', 'description', 'request_date', 'is_resolved', 'resolved_date')
+        fields = ('id', 'unit', 'unit_details', 'description', 'request_date', 'is_resolved', 'resolved_date')
+
+    def validate_resolved_date(self, value):
+        request_date = self.validated_data.get('request_date')
+        if value and request_date and value < request_date:
+            raise serializers.ValidationError('تاريخ المعالجة يجب أن يكون أكبر من تاريخ الطلب.')
+        return value
 
 class ExpenseSerializer(serializers.ModelSerializer):
     building_name = serializers.ReadOnlyField(source='building.name')
