@@ -9,6 +9,7 @@ from .models import (
     MaintenanceRequest,
     Expense,
     Notifiction,
+    AuditLog,
 )
 
 
@@ -25,7 +26,11 @@ class BuildingAdmin(admin.ModelAdmin):
 
     def total_rent(self, obj):
         return obj.total_rent()
-    total_rent.short_description = 'إجمالي الإيجار الشهري'
+    total_rent.short_description = 'الإيجار الشهري'
+
+    def yearly_rent(self, obj):
+        return obj.yearly_rent()
+    yearly_rent.short_description = 'الإيجار السنوي'
 
     def image_preview(self, obj):
         if obj.image:
@@ -39,6 +44,10 @@ class UnitAdmin(admin.ModelAdmin):
     search_fields = ('number', 'building__name')
     list_filter = ('unit_type', 'status', 'building')
     readonly_fields = ('created_at', 'updated_at', 'image_preview')
+
+    def yearly_rent(self, obj):
+        return obj.yearly_rent()
+    yearly_rent.short_description = 'الإيجار السنوي'
 
     def image_preview(self, obj):
         if obj.image:
@@ -54,6 +63,11 @@ class TenantAdmin(admin.ModelAdmin):
     def active_conracts(self, obj):
         return LeaseContract.objects.filter(tenant=obj, is_active=True).count()
     active_conracts.short_description = 'العقود النشطة'
+
+    def profile_picture_preview(self, obj):
+        if obj.profile_picture:
+            return format_html(f'<img src="{obj.profile_picture.url}" width="50" height="50" />')
+        return "لا توجد صورة"
     
 @admin.register(LeaseContract)
 class LeaseContractAdmin(admin.ModelAdmin):
@@ -68,6 +82,11 @@ class LeaseContractAdmin(admin.ModelAdmin):
             return f'{days} يوم' if days > 0 else 'منتهي'
         return 'غير محدد'
     remaining_days.short_description = 'الأيام المتبقية'
+
+    def is_due_soon(self, obj):
+        return "نعم" if obj.is_due_soon() else "لا"
+    is_due_soon.short_description = 'سينتهي قريبا'
+    is_due_soon.boolean = True
 
 @admin.register(Payment)
 class PaymentAdmin(admin.ModelAdmin):
@@ -103,3 +122,10 @@ class NotifictionAdmin(admin.ModelAdmin):
     @admin.action(description='تحديد الإشعارات كمقروءة')
     def mark_as_read(self, request, queryset):
         queryset.update(is_read=True)
+
+@admin.register(AuditLog)
+class AuditLogAdmin(admin.ModelAdmin):
+    list_display = ('action', 'model_name', 'user', 'timestamp', 'details')
+    list_filter = ('model_name', 'timestamp')
+    search_fields = ('action', 'model_name', 'user', 'details')
+    readonly_fields = ('timestamp',)
