@@ -9,6 +9,7 @@ from .models import (
     Payment,
     Tenant,
     Unit,
+    AuditLog,
 )
 
 
@@ -114,6 +115,12 @@ class MaintenanceRequestForm(forms.ModelForm):
             'is_resolved': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'resolved_date': forms.DateInput(attrs={'type': 'date', 'clss': 'form-control'}),
         }
+    def clean_resolved_date(self):
+        request_date = self.cleaned_data.get('request_date')
+        resolved_date = self.cleaned_data.get('resolved_date')
+        if resolved_date and request_date < resolved_date:
+            raise forms.ValidationError('تاريخ المعالجة يجب أن يكون أكبر من تاريخ الطلب.')
+        return resolved_date
 
 class ExpenseForm(forms.ModelForm):
     class Meta:
