@@ -9,6 +9,7 @@ from .models import (
     MaintenanceRequest,
     Expense,
     Notifiction,
+    Attachment,
 )
 
 
@@ -125,4 +126,10 @@ class ExpenseSerializer(serializers.ModelSerializer):
 class NotifictionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Notifiction
-        fields = ('id', 'message', 'created_at', 'is_read')
+        fields = ('id', 'message', 'created_at', 'is_read')    ,
+
+class AttachmentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Attachment
+        fields = ('id', 'file', 'description')
+        
