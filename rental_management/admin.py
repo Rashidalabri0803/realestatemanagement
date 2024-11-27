@@ -109,7 +109,7 @@ class AttachmentAdmin(admin.ModelAdmin):
 
     def file_preview(self, obj):
         if obj.file:
-            return format_html(f"<a href="{obj.file.url}" target='_blank'>عرض الملف</a>")
+            return format_html(f"<a href='{obj.file.url}' target='_blank'>عرض الملف</a>")
         return "لا توجد ملفات"
     file_preview.short_description = 'عرض الملف'
 
