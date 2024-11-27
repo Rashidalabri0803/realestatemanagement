@@ -100,7 +100,7 @@ class PaymentSerializer(serializers.ModelSerializer):
         return value
         
 class MaintenanceRequestSerializer(serializers.ModelSerializer):
-    unit_number = serializers.ReadOnlyField(source='unit.number')
+    unit_details = UnitSerializer(source='unit', read_only=True)
     class Meta:
         model = MaintenanceRequest
         fields = ('id', 'unit', 'unit_details', 'description', 'request_date', 'is_resolved', 'resolved_date')
