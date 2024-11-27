@@ -113,7 +113,7 @@ class MaintenanceRequestForm(forms.ModelForm):
             'description': forms.Textarea(attrs={'rows': 3, 'placholder': 'وصف المشكلة'}),
             'request_date': forms.DateInput(attrs={'type': 'date', 'clss': 'form-control'}),
             'is_resolved': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'resolved_date': forms.DateInput(attrs={'type': 'date', 'clss': 'form-control'}),
+            'resolved_date': forms.DateInput(attrs={'type': 'date', 'clss': 'form-check-input'}),
         }
     def clean_resolved_date(self):
         request_date = self.cleaned_data.get('request_date')
