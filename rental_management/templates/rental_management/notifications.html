@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+
+{% block title %}الإشعارات{% endblock %}
+
+{% block content %}
+<h1>الإشعارات</h1>
+<button id="mark-all-read" class="btn btn-success mb-3">تحديد الكل كمقروء</button>
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>الرسالة</th>
+      <th>الحالة</th>
+      <th>التاريخ</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for notification in notifications %}
+    <tr>
+      <td>{{ forloop.counter }}</td>
+      <td>{{ notification.message }}</td>
+      <td>
+        {% if notification.is_read %}
+        <span class="badge badge-success">مُقروء</span>
+        {% else %}
+        <span class="badge badge-warning">غير مُقروء</span>
+        {% endif %}
+      </td>
+      <td>{{ notification.created_at }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

@@ -1,0 +1,27 @@
+{% extends 'rental_management/base.html' %}
+
+{% block title %}العقود المنتهية{% endblock %}
+
+{% block content %}
+<h1>العقود المنتهية</h1>
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>الوحدة</th>
+      <th>المستأجر</th>
+      <th>تاريخ الانتهاء</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for contract in contracts %}
+    <tr>
+      <td>{{ forloop.counter }}</td>
+      <td>{{ contract.unit.name }}</td>
+      <td>{{ contract.tenant.full_name }}</td>
+      <td>{{ contract.end_date }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
