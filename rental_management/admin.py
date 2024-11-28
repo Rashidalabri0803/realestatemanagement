@@ -26,7 +26,7 @@ class BuildingAdmin(admin.ModelAdmin):
     readonly_fields = ('created_at', 'updated_at' , 'image_preview')
 
     def total_units(self, obj):
-        return obj.unit_set.count()
+        return obj.units.count()
     total_units.short_description = 'إجمالي الوحدات'
 
     def total_rent(self, obj):
