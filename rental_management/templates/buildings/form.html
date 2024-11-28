@@ -8,6 +8,6 @@
     {% csrf_token %}
     {{ form.as_p }}
     <button type="submit" class="btn btn-primary">حفظ</button>
-    <a href="{% url 'buildings:list' %}" class="btn btn-secondary">إلغاء</a>
+    <a href="{% url 'building_list' %}" class="btn btn-secondary">إلغاء</a>
 </form>
 {% endblock %}
