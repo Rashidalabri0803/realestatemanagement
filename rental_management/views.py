@@ -47,7 +47,7 @@ from .serializers import (
 
 
 class BuildingViewSet(viewsets.ModelViewSet):
-    queryset = Building.objects.prefetch_related('unit_set').all()
+    queryset = Building.objects.prefetch_related('total_units').all()
     serializer_class = BuildingSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['name', 'address']
@@ -57,7 +57,7 @@ class BuildingViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['get'])
     def units(self, request, pk=None):
         building = get_object_or_404(Building, pk=pk)
-        units = building.unit_set.all()
+        units = building.total_units.all()
         serializer = UnitSerializer(units, many=True, context={'request': request})
         return Response(serializer.data)
 
