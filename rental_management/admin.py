@@ -1,16 +1,17 @@
 from django.contrib import admin
 from django.utils.html import format_html
+
 from .models import (
-    Building,
-    Unit,
-    Tenant,
-    LeaseContract,
-    Payment,
-    MaintenanceRequest,
-    Expense,
-    Notifiction,
     Attachment,
     AuditLog,
+    Building,
+    Expense,
+    LeaseContract,
+    MaintenanceRequest,
+    Notifiction,
+    Payment,
+    Tenant,
+    Unit,
 )
 
 
@@ -65,10 +66,6 @@ class TenantAdmin(admin.ModelAdmin):
     def active_conracts(self, obj):
         return obj.active_contracts()
     active_conracts.short_description = 'العقود النشطة'
-
-    def overdue_payments(self, obj):
-        return obj.overdue_payments()
-    overdue_payments.short_description = 'الدفعات المتأخرة'
     
     def profile_picture_preview(self, obj):
         if obj.profile_picture:

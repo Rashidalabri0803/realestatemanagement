@@ -39,14 +39,14 @@ from .views import (
 )
 
 router = DefaultRouter()
-router.register('buildings', BuildingViewSet, basename='buildings')
-router.register('units', UnitViewSet, basename='units')
-router.register('tenants', TenantViewSet, basename='tenants')
-router.register('contracts', LeaseContractViewSet, basename='leasecontract')
-router.register('payments', PaymentViewSet, basename='payments')
-router.register('maintenance', MaintenanceRequestViewSet, basename='maintenance')
-router.register('expenses', ExpenseViewSet, basename='expenses')
-router.register('notifications', NotifictionViewSet, basename='notifications')
+router.register(r'buildings', BuildingViewSet, basename='buildings')
+router.register(r'units', UnitViewSet, basename='units')
+router.register(r'tenants', TenantViewSet, basename='tenants')
+router.register(r'contracts', LeaseContractViewSet, basename='leasecontract')
+router.register(r'payments', PaymentViewSet, basename='payments')
+router.register(r'maintenance', MaintenanceRequestViewSet, basename='maintenance')
+router.register(r'expenses', ExpenseViewSet, basename='expenses')
+router.register(r'notifications', NotifictionViewSet, basename='notifications')
 
 urlpatterns = [
     path('api/', include(router.urls)),

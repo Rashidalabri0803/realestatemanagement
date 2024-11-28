@@ -1,15 +1,15 @@
 from rest_framework import serializers
 
 from .models import (
-    Building,
-    Unit,
-    Tenant,
-    LeaseContract,
-    Payment,
-    MaintenanceRequest,
-    Expense,
-    Notifiction,
     Attachment,
+    Building,
+    Expense,
+    LeaseContract,
+    MaintenanceRequest,
+    Notifiction,
+    Payment,
+    Tenant,
+    Unit,
 )
 
 
@@ -86,6 +86,8 @@ class LeaseContractSerializer(serializers.ModelSerializer):
     def validate(self, data):
         if data['end_date'] <= data['start_date']:
             raise serializers.ValidationError('تاريخ الانتهاء يجب أن يكون أكبر من تاريخ البدء.')
+        if data['monthly_rent'] <= 0:
+            raise serializers.ValidationError('الإيجار الشهري يجب أن يكون أكبر من الصفر')
         return data
 
 class PaymentSerializer(serializers.ModelSerializer):

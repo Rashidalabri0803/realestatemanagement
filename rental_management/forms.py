@@ -1,15 +1,15 @@
 from django import forms
-
+from django.utils.timezone import now
 from .models import (
+    Attachment,
     Building,
-    Unit,
-    Tenant,
-    LeaseContract,
-    Payment,
-    MaintenanceRequest,
     Expense,
+    LeaseContract,
+    MaintenanceRequest,
     Notifiction,
-    Attachment
+    Payment,
+    Tenant,
+    Unit,
 )
 
 
@@ -18,10 +18,23 @@ class BuildingForm(forms.ModelForm):
         model = Building
         fields = ['name', 'address', 'description', 'image']
         widgets = {
-            'name': forms.TextInput(attrs={'class': 'form-control', 'placholder': 'اسم المبنى'}),
-            'address': forms.Textarea(attrs={'rows': 3, 'placholder': 'عنوان المبنى'}),
-            'description': forms.Textarea(attrs={'rows': 3, 'placholder': 'وصف المبنى'}),
-            'image': forms.FileInput(attrs={'class': 'form-control-file'}),
+            'name': forms.TextInput(attrs={
+                'class': 'form-control', 
+                'placholder': 'اسم المبنى'
+            }),
+            'address': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3, 
+                'placholder': 'عنوان المبنى'
+            }),
+            'description': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3, 
+                'placholder': 'وصف المبنى (اختياري)'
+            }),
+            'image': forms.FileInput(attrs={
+                'class': 'form-control-file'
+            }),
         }
 
     def clean_name(self):
@@ -35,13 +48,30 @@ class UnitForm(forms.ModelForm):
         model = Unit
         fields = ['building', 'unit_type', 'status', 'number', 'area', 'monthly_rent', 'image']
         widgets = {
-            'building': forms.Select(attrs={'class': 'form-control'}),
-            'unit_type': forms.Select(attrs={'class': 'form-control'}),
-            'status': forms.Select(attrs={'class': 'form-control'}),
-            'number': forms.TextInput(attrs={'class': 'form-control', 'placholder': 'رقم الوحدة'}),
-            'area': forms.NumberInput(attrs={'class': 'form-control', 'placholder': 'المساحة'}),
-            'monthly_rent': forms.NumberInput(attrs={'class': 'form-control', 'placholder': 'الإجمالي الشهري'}),
-            'image': forms.ClearableFileInput(attrs={'class': 'form-control'}),
+            'building': forms.Select(attrs={
+                'class': 'form-control'
+            }),
+            'unit_type': forms.Select(attrs={
+                'class': 'form-control'
+            }),
+            'status': forms.Select(attrs={
+                'class': 'form-control'
+            }),
+            'number': forms.TextInput(attrs={
+                'class': 'form-control', 
+                'placholder': 'رقم الوحدة'
+            }),
+            'area': forms.NumberInput(attrs={
+                'class': 'form-control', 
+                'placholder': 'المساحة'
+            }),
+            'monthly_rent': forms.NumberInput(attrs={
+                'class': 'form-control', 
+                'placholder': 'الإجمالي الشهري'
+            }),
+            'image': forms.ClearableFileInput(attrs={
+                'class': 'form-control'
+            }),
         }
 
     def clean_area(self):
@@ -50,17 +80,43 @@ class UnitForm(forms.ModelForm):
             raise forms.ValidationError('مساحة الوحدة يجب أن تكون أكبر من 10 متر مربع.')
         return area
 
+    def clean_monthly_rent(self):
+        rent = self.cleaned_data.get('monthly_rent')
+        if rent < 0:
+            raise forms.ValidationError('الإيجار الشهري يجب أن يكون أكبر من صفر.')
+        return rent
+
 class TenantForm(forms.ModelForm):
     class Meta:
         model = Tenant
         fields = ['full_name', 'phone_number', 'email', 'id_card', 'profile_picture', 'description']
         widgets = {
-            'full_name': forms.TextInput(attrs={'class': 'form-control', 'placholder': 'الاسم المستأجر'}),
-            'phone_number': forms.TextInput(attrs={'class': 'form-control', 'placholder': 'رقم الهاتف'}),
-            'email': forms.EmailInput(attrs={'class': 'form-control', 'placholder': 'البريد الإلكتروني'}),
-            'id_card': forms.TextInput(attrs={'class': 'form-control', 'placholder': 'رقم الهوية'}),
-            'profile_picture': forms.ClearableFileInput(attrs={'class': 'form-control'}),
-            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placholder': 'ملاحظات إضافية'})
+            'full_name': forms.TextInput(attrs={
+                'class': 'form-control', 
+                'placholder': 'الاسم المستأجر'
+            }),
+            'phone_number': forms.TextInput(attrs={
+                'class': 
+                'form-control', 
+                'placholder': 'رقم الهاتف'
+            }),
+            'email': forms.EmailInput(attrs={
+                'class': 
+                'form-control', 
+                'placholder': 'البريد الإلكتروني (اختياري)'
+            }),
+            'id_card': forms.TextInput(attrs={
+                'class': 'form-control', 
+                'placholder': 'رقم الهوية (اختياري)'
+            }),
+            'profile_picture': forms.ClearableFileInput(attrs={
+                'class': 'form-control'
+            }),
+            'description': forms.Textarea(attrs={
+                'class': 'form-control', 
+                'rows': 3, 
+                'placholder': 'ملاحظات إضافية (اختياري)'
+            }),
         }
 
     def clean_phone_number(self):
@@ -74,12 +130,28 @@ class LeaseContractForm(forms.ModelForm):
         model = LeaseContract
         fields = ['unit', 'tenant', 'start_date', 'end_date', 'monthly_rent', 'is_active']
         widgets = {
-            'unit': forms.Select(attrs={'class': 'form-control'}),
-            'tenant': forms.Select(attrs={'class': 'form-control'}),
-            'start_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'end_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'monthly_rent': forms.NumberInput(attrs={'class': 'form-control', 'placholder': 'الإيجار الشهري'}),
-            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'unit': forms.Select(attrs={
+                'class': 'form-control'
+            }),
+            'tenant': forms.Select(attrs={
+                'class': 'form-control'
+            }),
+            'start_date': forms.DateInput(attrs={
+                'class': 
+                'form-control', 
+                'type': 'date'
+            }),
+            'end_date': forms.DateInput(attrs={
+                'class': 'form-control', 
+                'type': 'date'
+            }),
+            'monthly_rent': forms.NumberInput(attrs={
+                'class': 'form-control', 
+                'placholder': 'الإيجار الشهري'
+            }),
+            'is_active': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'
+            }),
         }
 
     def clean_end_date(self):
@@ -94,10 +166,22 @@ class PaymentForm(forms.ModelForm):
         model = Payment
         fields = ['contract', 'amount', 'payment_date', 'description']
         widgets = {
-            'contract': forms.Select(attrs={'class': 'form-control'}),
-            'amount': forms.NumberInput(attrs={'class': 'form-control', 'placholder': 'المبلغ'}),
-            'payment_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placholder': 'وصف الدفع'}),
+            'contract': forms.Select(attrs={
+                'class': 'form-control'
+            }),
+            'amount': forms.NumberInput(attrs={
+                'class': 'form-control', 
+                'placholder': 'المبلغ'
+            }),
+            'payment_date': forms.DateInput(attrs={
+                'class': 'form-control', 
+                'type': 'date'
+            }),
+            'description': forms.Textarea(attrs={
+                'class': 'form-control', 
+                'rows': 3, 
+                'placholder': 'وصف الدفع'
+            }),
         }
 
     def clean_amount(self):
@@ -111,11 +195,25 @@ class MaintenanceRequestForm(forms.ModelForm):
         model = MaintenanceRequest
         fields = ['unit', 'description', 'request_date', 'is_resolved', 'resolved_date']
         widgets = {
-            'unit': forms.Select(attrs={'class': 'form-control'}),
-            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placholder': 'وصف المشكلة'}),
-            'request_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'is_resolved': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'resolved_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'unit': forms.Select(attrs={
+                'class': 'form-control'
+            }),
+            'description': forms.Textarea(attrs={
+                'class': 'form-control', 
+                'rows': 3, 
+                'placholder': 'وصف المشكلة'
+            }),
+            'request_date': forms.DateInput(attrs={
+                'class': 'form-control', 
+                'type': 'date'
+            }),
+            'is_resolved': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'
+            }),
+            'resolved_date': forms.DateInput(attrs={
+                'class': 'form-control', 
+                'type': 'date'
+            }),
         }
     def clean_resolved_date(self):
         request_date = self.cleaned_data.get('request_date')
@@ -129,10 +227,22 @@ class ExpenseForm(forms.ModelForm):
         model = Expense
         fields = ['building', 'description', 'amount', 'date']
         widgets = {
-            'building': forms.Select(attrs={'class': 'form-control'}),
-            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placholder': 'وصف المصروف'}),
-            'amount': forms.NumberInput(attrs={'class': 'form-control', 'placholder': 'المبلغ'}),
-            'date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'building': forms.Select(attrs={
+                'class': 'form-control'
+            }),
+            'description': forms.Textarea(attrs={
+                'class': 'form-control', 
+                'rows': 3, 
+                'placholder': 'وصف المصروف'
+            }),
+            'amount': forms.NumberInput(attrs={
+                'class': 'form-control', 
+                'placholder': 'المبلغ'
+            }),
+            'date': forms.DateInput(attrs={
+                'class': 'form-control', 
+                'type': 'date'
+            }),
         }
     def clean_amount(self):
         amount = self.cleaned_data.get('amount')
@@ -145,8 +255,13 @@ class NotifictionForm(forms.ModelForm):
         model = Notifiction
         fields = ['message', 'is_read']
         widgets = {
-            'message': forms.Textarea(attrs={'rows': 3, 'placholder': 'نص الإشعار'}),
-            'is_read': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'message': forms.Textarea(attrs={
+                'rows': 3, 
+                'placholder': 'نص الإشعار'
+            }),
+            'is_read': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'
+            }),
         }
 
 class AttachmentForm(forms.ModelForm):
@@ -154,7 +269,15 @@ class AttachmentForm(forms.ModelForm):
         model = Attachment
         fields = ['contract', 'file', 'description']
         widgets = {
-            'contract': forms.Select(attrs={'class': 'form-control'}),
-            'file': forms.FileInput(attrs={'class': 'form-control-file'}),
-            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placholder': 'وصف الملف'})
+            'contract': forms.Select(attrs={
+                'class': 'form-control'
+            }),
+            'file': forms.FileInput(attrs={
+                'class': 'form-control-file'
+            }),
+            'description': forms.Textarea(attrs={
+                'class': 'form-control', 
+                'rows': 3, 
+                'placholder': 'وصف الملف'
+            }),
         }
