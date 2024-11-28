@@ -191,118 +191,118 @@ class AttachmentViewSet(viewsets.ModelViewSet):
         
 class BuildingListView(ListView):
     model = Building
-    template_name = 'rental_management/building_list.html'
+    template_name = 'buildings/list.html'
     context_object_name = 'buildings'
 
 class BuildingDetailView(DetailView):
     model = Building
-    template_name = 'rental_management/building_detail.html'
+    template_name = 'buildings/detail.html'
     context_object_name = 'building'
 
 class BuildingCreateView(CreateView):
     model = Building
-    template_name = 'rental_management/building_form.html'
+    template_name = 'buildings/form.html'
     form_class = BuildingForm
-    success_url = reverse_lazy('building_list')
+    success_url = reverse_lazy('list')
 
 class BuildingUpdateView(UpdateView):
     model = Building
-    template_name = 'rental_management/building_form.html'
+    template_name = 'buildings/form.html'
     form_class = BuildingForm
-    success_url = reverse_lazy('building_list')
+    success_url = reverse_lazy('list')
 
 class BuildingDeleteView(DeleteView):
     model = Building
     template_name = 'rental_management/building_confirm_delete.html'
-    success_url = reverse_lazy('building_list')
+    success_url = reverse_lazy('list')
 
 class UnitListView(ListView):
     model = Unit
-    template_name = 'rental_management/unit_list.html'
+    template_name = 'units/list.html'
     context_object_name = 'units'
 
 class UnitCreateView(CreateView):
     model = Unit
-    template_name = 'rental_management/unit_form.html'
+    template_name = 'units/form.html'
     form_class = UnitForm
-    success_url = reverse_lazy('unit_list')
+    success_url = reverse_lazy('list')
 
 class UnitUpdateView(UpdateView):
     model = Unit
-    template_name = 'rental_management/unit_form.html'
+    template_name = 'units/form.html'
     form_class = UnitForm
-    success_url = reverse_lazy('unit_list')
+    success_url = reverse_lazy('list')
 
 class UnitDeleteView(DeleteView):
     model = Unit
     template_name = 'rental_management/unit_confirm_delete.html'
-    success_url = reverse_lazy('unit_list')
+    success_url = reverse_lazy('list')
 
 class TenantListView(ListView):
     model = Tenant
-    template_name = 'rental_management/tenant_list.html'
+    template_name = 'tenants/list.html'
     context_object_name = 'tenants'
 
 class TenantCreateView(CreateView):
     model = Tenant
-    template_name = 'rental_management/tenant_form.html'
+    template_name = 'tenants/form.html'
     form_class = TenantForm
-    success_url = reverse_lazy('tenant_list')
+    success_url = reverse_lazy('list')
 
 class TenantUpdateView(UpdateView):
     model = Tenant
-    template_name = 'rental_management/tenant_form.html'
+    template_name = 'tenants/form.html'
     form_class = TenantForm
-    success_url = reverse_lazy('tenant_list')
+    success_url = reverse_lazy('list')
 
 class TenantDeleteView(DeleteView):
     model = Tenant
     template_name = 'rental_management/tenant_confirm_delete.html'
-    success_url = reverse_lazy('tenant_list')
+    success_url = reverse_lazy('list')
 
 class LeaseContractListView(ListView):
     model = LeaseContract
-    template_name = 'rental_management/lease_contract_list.html'
+    template_name = 'lease_contracts/list.html'
     context_object_name = 'contracts'
 
 class LeaseContractCreateView(CreateView):
     model = LeaseContract
-    template_name = 'rental_management/lease_contract_form.html'
+    template_name = 'lease_contracts/form.html'
     form_class = LeaseContractForm
-    success_url = reverse_lazy('lease_contract_list')
+    success_url = reverse_lazy('list')
 
 class LeaseContractUpdateView(UpdateView):
     model = LeaseContract
-    template_name = 'rental_management/lease_contract_form.html'
+    template_name = 'lease_contracts/form.html'
     form_class = LeaseContractForm
-    success_url = reverse_lazy('lease_contract_list')
+    success_url = reverse_lazy('list')
 
 class LeaseContractDeleteView(DeleteView):
     model = LeaseContract
     template_name = 'rental_management/lease_contract_confirm_delete.html'
-    success_url = reverse_lazy('lease_contract_list')
+    success_url = reverse_lazy('list')
 
 class MaitenanceRequestListView(ListView):
     model = MaintenanceRequest
-    template_name = 'rental_management/maintenance_request_list.html'
+    template_name = 'maintenance_requests/list.html'
     context_object_name = 'maintenance_requests'
 
 class MaitenanceRequestCreateView(CreateView):
     model = MaintenanceRequest
-    template_name = 'rental_management/maintenance_request_form.html'
+    template_name = 'maintenance_requests/form.html'
     form_class = MaintenanceRequestForm
-    success_url = reverse_lazy('maintenance_request_list')
+    success_url = reverse_lazy('list')
 
 class MaitenanceRequestUpdateView(UpdateView):
     model = MaintenanceRequest
-    template_name = 'rental_management/maintenance_request_form.html'
+    template_name = 'rental_management/form.html'
     form_class = MaintenanceRequestForm
-    success_url = reverse_lazy('maintenance_request_list')
+    success_url = reverse_lazy('list')
 
 class MaitenanceRequestDeleteView(DeleteView):
     model = MaintenanceRequest
     template_name = 'rental_management/maintenance_request_confirm_delete.html'
-    success_url = reverse_lazy('maintenance_request_list')
+    success_url = reverse_lazy('list')
 
 class ExpenseListView(ListView):
     model = Expense
@@ -328,5 +328,5 @@ class ExpenseDeleteView(DeleteView):
 
 class NotifictionListView(ListView):
     model = Notifiction
-    template_name = 'rental_management/notifiction_list.html'
+    template_name = 'rental_management/notifications.html'
     context_object_name = 'notifictions'
