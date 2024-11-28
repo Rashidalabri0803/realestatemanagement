@@ -92,7 +92,7 @@ class Unit(models.Model):
     monthly_rent = models.DecimalField(
         max_digits=10, 
         decimal_places=2, 
-        verbose_name= _('الإجمالي الشهري')
+        verbose_name= _('الإيجار الشهري')
     )
     image = models.ImageField(
         upload_to='unit_images/', 
@@ -220,7 +220,7 @@ class LeaseContract(models.Model):
 
 class Attachment(models.Model):
     contract = models.ForeignKey(
-        LeaseContract, 
+        'LeaseContract', 
         on_delete=models.CASCADE,
         related_name='attachments',
         verbose_name=_('العقد')
@@ -241,6 +241,7 @@ class Attachment(models.Model):
     class Meta:
         verbose_name = _('مرفق')
         verbose_name_plural = _('المرفقات')
+        ordering = ['-id']
 
 class AuditLog(models.Model):
     action = models.CharField(
@@ -363,21 +364,22 @@ class Notifiction(models.Model):
     message = models.TextField(
         verbose_name=_('الرسالة')
     )
-    created_at = models.DateTimeField(
-        auto_now_add=True, 
-        verbose_name=_('تاريخ الإنشاء')
-    )
     is_read = models.BooleanField(
         default=False, 
         verbose_name=_('مقروء')
     )
+    created_at = models.DateTimeField(
+        auto_now_add=True, 
+        verbose_name=_('تاريخ الإنشاء')
+    )
 
     def __str__(self):
-        return f'إشعار: {self.message[:20]}...'
+        return f"إشعار: {self.message[:20]}{'...' if len(self.message) > 20 else ''}"
 
     class Meta:
         verbose_name = _('إشعار')
         verbose_name_plural = _('الإشعارات')
+        ordering = ['-created_at']
 
 class TenantBankAccount(models.Model):
     tenant = models.ForeignKey(
