@@ -72,7 +72,7 @@ urlpatterns = [
     path('contracts/<int:pk>/edit/', LeaseContractUpdateView.as_view(), name='leasecontract_edit'),
     path('contracts/<int:pk>/delete/', LeaseContractDeleteView.as_view(), name='leasecontract_delete'),
 
-    path('maintenance/', MaitenanceRequestListView.as_view(), name='maintenance_request_list'),
+    path('maintenance/', MaitenanceRequestListView.as_view(), name='maintenance_list'),
     path('maintenance/create/', MaitenanceRequestCreateView.as_view(), name='maintenance_request_create'),
     path('maintenance/<int:pk>/edit/', MaitenanceRequestUpdateView.as_view(), name='maintenance_request_edit'),
     path('maintenance/<int:pk>/delete/', MaitenanceRequestDeleteView.as_view(), name='maintenance_request_delete'),
@@ -83,7 +83,7 @@ urlpatterns = [
     path('expenses/<int:pk>/edit/', ExpenseUpdateView.as_view(), name='expense_edit'),
     path('expenses/<int:pk>/delete/', ExpenseDeleteView.as_view(), name='expense_delete'),
 
-    path('notifications/', NotifictionListView.as_view(), name='notification_list'),
+    path('notifications/', NotifictionListView.as_view(), name='notifications'),
 
     path('docs/', include('rest_framework.urls')),
 ]
