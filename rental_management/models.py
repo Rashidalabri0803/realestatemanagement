@@ -32,11 +32,11 @@ class Building(models.Model):
         verbose_name=_('تاريخ التحديث')
     )
 
-    #def total_unit(self):
-        #return self.unit_set.count()
+    def total_unit(self):
+        return self.unit_set.count()
 
-    #def total_rent(self):
-        #return sum(unit.monlthly_rent for unit in self.unit_set.filter(status='rented'))
+    def total_rent(self):
+        return sum(unit.monlthly_rent for unit in self.unit_set.filter(status='rented'))
 
     def yearly_rent(self):
         return self.total_rent() * 12
