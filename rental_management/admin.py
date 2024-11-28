@@ -62,10 +62,9 @@ class UnitAdmin(admin.ModelAdmin):
 
 @admin.register(Tenant)
 class TenantAdmin(admin.ModelAdmin):
-    list_display = ('full_name', 'email', 'phone', 'is_active', 'created_at')
-    search_fields = ('full_name', 'email')
-    list_filter = ('is_active', 'created_at')
-    readonly_fields = ('created_at', 'updated_at')
+    list_display = ('full_name', 'phone_number', 'email', 'active_contracts',   'profile_picture_preview')
+    search_fields = ('full_name', 'phone_number', 'email')
+    readonly_fields = ('profile_picture_preview',)
 
     def active_contracts(self, obj):
         return obj.active_contracts()
@@ -103,10 +102,9 @@ class LeaseContractAdmin(admin.ModelAdmin):
 
 @admin.register(Invoice)
 class InvoiceAdmin(admin.ModelAdmin):
-    list_display = ('number', 'tenant', 'building', 'total_rent', 'total_payments', 'total_expenses', 'total_amount', 'is_paid', 'created_at')
-    search_fields = ('number', 'tenant__full_name', 'building__name')
-    list_filter = ('is_paid', 'created_at')
-    readonly_fields = ('created_at', 'updated_at')
+    list_display = ('contract', 'issue_date', 'due_date', 'amount', 'is_paid')
+    list_filter = ('is_paid', 'issue_date', 'due_date')
+    search_fields = ('contract__unit_number',)
 
     def days_until_dues(self, obj):
         return obj.days_until_dues()
@@ -114,17 +112,15 @@ class InvoiceAdmin(admin.ModelAdmin):
 
 @admin.register(Reminder)
 class ReminderAdmin(admin.ModelAdmin):
-    list_display = ('tenant', 'is_sent', 'created_at')
-    search_fields = ('tenant__full_name', 'tenant__email')
+    list_display = ('tenant', 'contract', 'message', 'created_at', 'is_sent')
     list_filter = ('is_sent', 'created_at')
-    readonly_fields = ('created_at', 'updated_at')
+    search_fields = ('tenant__full_name', 'message')
 
 @admin.register(Subscription)
 class SubscriptionAdmin(admin.ModelAdmin):
-    list_display = ('tenant', 'building', 'is_active', 'created_at')
-    search_fields = ('tenant__full_name', 'building__name')
-    list_filter = ('is_active', 'created_at')
-    readonly_fields = ('created_at', 'updated_at')
+    list_display = ('name', 'tenant', 'price', 'start_date', 'end_date', 'is_active')
+    search_fields = ('name', 'tenant__full_name')
+    list_filter = ('is_active', 'start_date', 'end_date')
 
 @admin.register(MaintenanceRequest)
 class MaintenanceRequestAdmin(admin.ModelAdmin):
@@ -142,10 +138,9 @@ class MaintenanceRequestAdmin(admin.ModelAdmin):
 @admin.register(Report)
 class ReportAdmin(admin.ModelAdmin):
     list_display = ('name', 'description', 'created_at', 'last_generated')
-    search_fields = ('name', 'description')
-    list_filter = ('created_at', 'last_generated')
-    readonly_fields = ('created_at', 'last_generated')
+    actions = ['generate_reports']
 
+    @admin.action(description='توليد التقارير المحددة')
     def generate_report(self, request, queryset):
         for report in queryset:
             report.generate_report()
@@ -153,10 +148,10 @@ class ReportAdmin(admin.ModelAdmin):
 
 @admin.register(AuditLog)
 class AuditLogAdmin(admin.ModelAdmin):
-    list_display = ('action', 'model_name', 'user', 'timestamp', 'details')
+    list_display = ('action', 'model_name', 'object_id', 'user', 'timestamp')
     list_filter = ('model_name', 'timestamp')
-    search_fields = ('action', 'model_name', 'user', 'details')
-    readonly_fields = ('timestamp',)
+    search_fields = ('action', 'model_name', 'user')
+    list_filter = ('model_name', 'timestamp',)
     
 @admin.register(Expense)
 class ExpenseAdmin(admin.ModelAdmin):

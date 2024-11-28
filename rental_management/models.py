@@ -225,7 +225,40 @@ class AuditLog(models.Model):
         verbose_name_plural = _('السجلات')
         ordering = ['-timestamp']
 class Tenant(models.Model):
-    pass
+    full_name = models.CharField(
+        max_length=200, 
+        verbose_name=_('الاسم الكامل')
+    )
+    email = models.EmailField(
+        verbose_name=_('البريد الإلكتروني')
+    )
+    phone_number = models.CharField(
+        max_length=50, 
+        verbose_name=_('رقم الهاتف')
+    )
+    is_active = models.BooleanField(
+        default=True, 
+        verbose_name=_('مفعل')
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True, 
+        verbose_name=_('تاريخ الإنشاء')
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True, 
+        verbose_name=_('تاريخ التحديث')
+    )
+    active_contracts = models.ManyToManyField(
+        'LeaseContract', 
+        related_name='active_tenants',
+        verbose_name=_('العقود النشطة')
+    )
+    profile_picture_preview = models.ImageField(
+        upload_to='tenant_profile_pictures/', 
+        blank=True, 
+        null=True, 
+        verbose_name=_('صورة الملف الشخصي')
+    )
     
 class LeaseContract(models.Model):
     unit = models.ForeignKey(
