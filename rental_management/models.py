@@ -224,18 +224,20 @@ class AuditLog(models.Model):
         verbose_name = _('سجل')
         verbose_name_plural = _('السجلات')
         ordering = ['-timestamp']
-
+class Tenant(models.Model):
+    pass
+    
 class LeaseContract(models.Model):
     unit = models.ForeignKey(
         Unit, 
         on_delete=models.CASCADE,
         verbose_name=_('الوحدة')
     )
-    #tenant = models.ForeignKey(
-        #'Tenant', 
-        #on_delete=models.CASCADE,
-        #verbose_name=_('المستأجر')
-    #)
+    tenant = models.ForeignKey(
+        'Tenant', 
+        on_delete=models.CASCADE,
+        verbose_name=_('المستأجر')
+    )
     start_date = models.DateField(
         default=now,
         verbose_name=_('تاريخ البدء')
@@ -273,13 +275,12 @@ class LeaseContract(models.Model):
         return invoice
 
     def __str__(self):
-        return f'عقد إيجار: {selef.unit}'
+        return f'عقد إيجار: {selef.unit} - {self.tenant}'
 
     class Meta:
         verbose_name = _('عقد إيجار')
         verbose_name_plural = _('عقود الإيجار')
         ordering = ['-start_date']
-        
 class Invoice(models.Model):
     contract = models.ForeignKey(
         'LeaseContract', 
@@ -322,12 +323,12 @@ class Invoice(models.Model):
         ]
 
 class Reminder(models.Model):
-    #tenant = models.ForeignKey(
-        #'Tenant', 
-        #on_delete=models.CASCADE,
-        #related_name='reminders',
-        #verbose_name=_('الأشخاص')
-    #)
+    tenant = models.ForeignKey(
+        'Tenant', 
+        on_delete=models.CASCADE,
+        related_name='reminders',
+        verbose_name=_('الأشخاص')
+    )
     contract = models.ForeignKey(
         'LeaseContract', 
         on_delete=models.CASCADE,
@@ -347,14 +348,14 @@ class Reminder(models.Model):
     )
 
     def __str__(self):
-        return f'تذكير {self.id} - {self.contract.unit.number} - {self.message}'
+        return f'تذكير {self.tenant.full_name}'
 
     class Meta:
         verbose_name = _('تذكير')
         verbose_name_plural = _('التذكيرات')
         ordering = ['-created_at']
         indexes = [
-            models.Index(fields=['is_sent']),
+            models.Index(fields=['tenant', 'is_sent']),
         ]
 
 class Notification(models.Model):
@@ -392,12 +393,12 @@ class Notification(models.Model):
         ordering = ['-created_at']
 
 class Subscription(models.Model):
-    #tenant = models.ForeignKey(
-        #'Tenant', 
-        #on_delete=models.CASCADE,
-        #related_name='subscriptions',
-        #verbose_name=_('المستأجر')
-    #)
+    tenant = models.ForeignKey(
+        'Tenant', 
+        on_delete=models.CASCADE,
+        related_name='subscriptions',
+        verbose_name=_('المستأجر')
+    )
     name = models.CharField(
         max_length=200, 
         verbose_name=_('اسم الاشتراك')
@@ -471,3 +472,6 @@ class Report(models.Model):
         verbose_name = _('تقرير')
         verbose_name_plural = _('التقارير')
         ordering = ['-created_at']
+
+class Payment(models.Model):
+    pass
