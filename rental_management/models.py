@@ -187,11 +187,13 @@ class LeaseContract(BaseModel):
     unit = models.OneToOneField(
         Unit, 
         on_delete=models.CASCADE,
+        related_name="contract",
         verbose_name=_("الوحدة")
     )
     tenant = models.ForeignKey(
         "Tenant", 
         on_delete=models.CASCADE,
+        related_name="contracts",
         verbose_name=_("المستأجر")
     )
     start_date = models.DateField(
@@ -226,7 +228,7 @@ class LeaseContract(BaseModel):
         )
 
     def __str__(self):
-        return f"عقد إيجار: {selef.unit} - {self.tenant}"
+        return f"عقد إيجار: {self.unit} - {self.tenant}"
 
     class Meta:
         verbose_name = _("عقد إيجار")
@@ -716,7 +718,7 @@ class SystemEvent(BaseModel):
     )
 
     def __str__(self):
-        return f"حدث: {self.get_event_display()} - {self.timestamp}"
+        return f"حدث: {self.get_event_type_display()} - {self.timestamp}"
 
     class Meta:
         verbose_name = _("حدث النظام")
@@ -984,15 +986,10 @@ class SystemStatistics(BaseModel):
         ]
 
 class MessageLog(BaseModel):
-    recipient = models.CharField(
-        max_length=50,
-        choices = [
-            ("sent", _("تم الإرسال")),
-            ("failed", _("فشل"))
-        ],
-        default="sent",
-        verbose_name=_("الحالة")
-    )
+    recipient = models.CharField(max_length=200, verbose_name=_("المستلم"))
+    message = models.TextField(verbose_name=_("الرسالة"))
+    sent_date = models.DateTimeField(auto_now_add=True, verbose_name=_("تاريخ الإرسال"))
+    status = models.CharField(max_length=50, choices=[("sent", _("تم الإرسال")), ("failed", _("فشل"))], default="sent", verbose_name=_("الحالة"))
     response_details = models.TextField(
         blank=True, 
         null=True, 
