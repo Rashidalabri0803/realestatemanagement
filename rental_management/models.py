@@ -236,7 +236,7 @@ class Invoice(models.Model):
         return None
 
     def __str__(self):
-        return f'فاتورة {self.id} - {self.amount} ({'' if self.is_paid else ''})'
+        return f"فاتورة {self.id} - {self.amount} ({'مدفوعة' if self.is_paid else 'غير مدفوعة'})"
 
     class Meta:
         verbose_name = _('فاتورة')
@@ -367,8 +367,7 @@ class Reminder(models.Model):
     )
 
     def __str__(self):
-        return f'تذكير {self.tenant.full_name} - {('تم إرساله' if self.is_sent else 'لم يتم إرساله')}'
-
+        return f"تذكير {self.tenant.full_name} - {('تم إرساله' if self.is_sent else 'لم يتم إرساله')}"
     class Meta:
         verbose_name = _('تذكير')
         verbose_name_plural = _('التذكيرات')
@@ -401,7 +400,7 @@ class Notification(models.Model):
     )
 
     def __str__(self):
-        return f'إشعار: {self.message[:20]}{'...' if len(self.message) > 20 else ""}'
+        return f"إشعار: {self.message[:20]}{'...' if len(self.message) > 20 else ''}"
 
     class Meta:
         verbose_name = _('إشعار')
