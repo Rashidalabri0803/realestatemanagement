@@ -101,9 +101,6 @@ class Unit(models.Model):
         verbose_name=_('تاريخ التحديث')
     )
 
-    def is_available(self):
-        return self.status == 'Available'
-
     def yearly_rent(self):
         return self.monthly_rent * 12
 
@@ -118,6 +115,165 @@ class Unit(models.Model):
             models.Index(fields=['status', 'unit_type']),
         ]
 
+class Tenant(models.Model):
+    full_name = models.CharField(
+        max_length=200, 
+        verbose_name=_('الاسم الكامل')
+    )
+    email = models.EmailField(
+        verbose_name=_('البريد الإلكتروني')
+    )
+    phone_number = models.CharField(
+        max_length=50, 
+        verbose_name=_('رقم الهاتف')
+    )
+    id_card = models.CharField(
+        max_length=50,
+        blank=True,
+        null=True,
+        verbose_name=_('رقم الهوية')
+    )
+    profile_picture = models.ImageField(
+        upload_to='tenant_pictures/', 
+        blank=True, 
+        null=True, 
+        verbose_name=_('صورة المستأجر'),
+    )
+    description = models.TextField(
+        blank=True, 
+        null=True, 
+        verbose_name=_('ملاحظات')
+    )
+    def __str__(self):
+        return self.full_name
+
+    class Meta:
+        verbose_name = _('مستأجر')
+        verbose_name_plural = _('المستأجرون')
+        ordering = ['full_name']
+        indexes = [
+            models.Index(fields=['phone_number']),
+        ]
+
+class LeaseContract(models.Model):
+    unit = models.OneToOneField(
+        Unit, 
+        on_delete=models.CASCADE,
+        verbose_name=_('الوحدة')
+    )
+    tenant = models.ForeignKey(
+        'Tenant', 
+        on_delete=models.CASCADE,
+        verbose_name=_('المستأجر')
+    )
+    start_date = models.DateField(
+        default=now,
+        verbose_name=_('تاريخ البدء')
+    )
+    end_date = models.DateField(
+        verbose_name=_('تاريخ النهاية')
+    )
+    monthly_rent = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2, 
+        verbose_name=_('الإيجار الشهري')
+    )
+    is_active = models.BooleanField(
+        default=True, 
+        verbose_name=_('نشط')
+    )
+
+    def remainig_days(self):
+        if self.end_date:
+            delta = self.end_date - now().date()
+            return delta.days
+        return None
+
+    def generate_invoice(self):
+        return Invoice.objects.create(
+            contract=self,
+            issue_date=now(),.date() + timedelta(days=30),
+            amount=self.monthly_rent
+        )
+
+    def __str__(self):
+        return f'عقد إيجار: {selef.unit} - {self.tenant}'
+
+    class Meta:
+        verbose_name = _('عقد إيجار')
+        verbose_name_plural = _('عقود الإيجار')
+        ordering = ['-start_date']
+
+class Invoice(models.Model):
+    contract = models.ForeignKey(
+        'LeaseContract', 
+        on_delete=models.CASCADE,
+        related_name='invoices',
+        verbose_name=_('العقد')
+    )
+    issue_date = models.DateField(
+        default=now,
+        verbose_name=_('تاريخ الإصدار')
+    )
+    due_date = models.DateField(
+        verbose_name=_('تاريخ الاستحقاق')
+    )
+    amount = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2, 
+        verbose_name=_('المبلغ')
+    )
+    is_paid = models.BooleanField(
+        default=False, 
+        verbose_name=_('مدفوعة')
+    )
+
+    def days_until_due(self):
+        if self.due_date:
+            delta = self.due_date - now().date()
+            return delta.days
+        return None
+
+    def __str__(self):
+        return f'فاتورة {self.id} - {self.amount} ({'' if self.is_paid else ''})'
+
+    class Meta:
+        verbose_name = _('فاتورة')
+        verbose_name_plural = _('الفواتير')
+        ordering = ['-issue_date']
+
+class Payment(models.Model):
+    conract = models.ForeignKey(
+        'LeaseContract', 
+        on_delete=models.CASCADE,
+        related_name='payments',
+        verbose_name=_('العقد')
+    )
+    amount = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2, 
+        verbose_name=_('المبلغ')
+    )
+    payment_date = models.DateField(
+        default=now,
+        verbose_name=_('تاريخ الدفع')
+    )
+    description = models.TextField(
+        blank=True, 
+        null=True, 
+        verbose_name=_('وصف')
+    )
+    def __str__(self):
+        return f'مدفوعات: {self.conract.unit.number} - {self.amount} ({self.payment_date})'
+
+    class Meta:
+        verbose_name = _('مدفوعة')
+        verbose_name_plural = _('المدفوعات')
+        ordering = ['-payment_date']
+        indexes = [
+            models.Index(fields=['conract', 'payment_date'])
+        ]
+        
 class MaintenanceRequest(models.Model):
     unit = models.ForeignKey(
         Unit, 
@@ -150,7 +306,7 @@ class MaintenanceRequest(models.Model):
         verbose_name_plural = _('طلبات الصيانة')
         ordering = ['-request_date']
         indexes = [
-            models.Index(fields=['is_resolved']),
+            models.Index(fields=['unit', 'is_resolved']),
         ]
 
 class Expense(models.Model):
@@ -184,6 +340,73 @@ class Expense(models.Model):
             models.Index(fields=['building', 'date']),
         ]
 
+class Reminder(models.Model):
+    tenant = models.ForeignKey(
+        'Tenant', 
+        on_delete=models.CASCADE,
+        related_name='reminders',
+        verbose_name=_('المستأجر')
+    )
+    contract = models.ForeignKey(
+        'LeaseContract', 
+        on_delete=models.CASCADE,
+        related_name='reminders',
+        verbose_name=_('العقد')
+    )
+    message = models.TextField(
+        verbose_name=_('الرسالة التذكير')
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True, 
+        verbose_name=_('تاريخ الإنشاء')
+    )
+    is_sent = models.BooleanField(
+        default=False, 
+        verbose_name=_('تم إرساله')
+    )
+
+    def __str__(self):
+        return f'تذكير {self.tenant.full_name} - {('تم إرساله' if self.is_sent else 'لم يتم إرساله')}'
+
+    class Meta:
+        verbose_name = _('تذكير')
+        verbose_name_plural = _('التذكيرات')
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['tenant', 'is_sent']),
+        ]
+class Notification(models.Model):
+    message = models.TextField(
+        verbose_name=_('الرسالة')
+    )
+    is_read = models.BooleanField(
+        default=False, 
+        verbose_name=_('مقروء')
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True, 
+        verbose_name=_('تاريخ الإنشاء')
+    )
+    related_model = models.CharField(
+        max_length=100, 
+        blank=True,
+        null=True,
+        verbose_name=_('النموذج المرتبط'),
+    )
+    related_id = models.PositiveIntegerField(
+        blank=True, 
+        null=True, 
+        verbose_name=_('المعرف المرتبط'),
+    )
+
+    def __str__(self):
+        return f'إشعار: {self.message[:20]}{'...' if len(self.message) > 20 else ""}'
+
+    class Meta:
+        verbose_name = _('إشعار')
+        verbose_name_plural = _('الإشعارات')
+        ordering = ['-created_at']
+        
 class AuditLog(models.Model):
     action = models.CharField(
         max_length=200, 
@@ -209,13 +432,6 @@ class AuditLog(models.Model):
         null=True, 
         verbose_name=_('تفاصيل')
     )
-    related_model = models.CharField(
-        max_length=100, 
-        blank=True, 
-        null=True, 
-        verbose_name=_('النموذج المرتبط'),
-        help_text=_('اسم النموذج المرتبط بالسجل')
-    )
 
     def __str__(self):
         return f'{self.action} - {self.model_name} - {self.timestamp}'
@@ -224,206 +440,6 @@ class AuditLog(models.Model):
         verbose_name = _('سجل')
         verbose_name_plural = _('السجلات')
         ordering = ['-timestamp']
-class Tenant(models.Model):
-    full_name = models.CharField(
-        max_length=200, 
-        verbose_name=_('الاسم الكامل')
-    )
-    email = models.EmailField(
-        verbose_name=_('البريد الإلكتروني')
-    )
-    phone_number = models.CharField(
-        max_length=50, 
-        verbose_name=_('رقم الهاتف')
-    )
-    is_active = models.BooleanField(
-        default=True, 
-        verbose_name=_('مفعل')
-    )
-    created_at = models.DateTimeField(
-        auto_now_add=True, 
-        verbose_name=_('تاريخ الإنشاء')
-    )
-    updated_at = models.DateTimeField(
-        auto_now=True, 
-        verbose_name=_('تاريخ التحديث')
-    )
-    active_contracts = models.ManyToManyField(
-        'LeaseContract', 
-        related_name='active_tenants',
-        verbose_name=_('العقود النشطة')
-    )
-    profile_picture_preview = models.ImageField(
-        upload_to='tenant_profile_pictures/', 
-        blank=True, 
-        null=True, 
-        verbose_name=_('صورة الملف الشخصي')
-    )
-    
-class LeaseContract(models.Model):
-    unit = models.ForeignKey(
-        Unit, 
-        on_delete=models.CASCADE,
-        verbose_name=_('الوحدة')
-    )
-    tenant = models.ForeignKey(
-        'Tenant', 
-        on_delete=models.CASCADE,
-        verbose_name=_('المستأجر')
-    )
-    start_date = models.DateField(
-        default=now,
-        verbose_name=_('تاريخ البدء')
-    )
-    end_date = models.DateField(
-        verbose_name=_('تاريخ النهاية')
-    )
-    monthly_rent = models.DecimalField(
-        max_digits=10, 
-        decimal_places=2, 
-        verbose_name=_('الإيجار الشهري')
-    )
-    is_active = models.BooleanField(
-        default=True, 
-        verbose_name=_('نشط')
-    )
-
-    def remainig_days(self):
-        if self.end_date:
-            delta = self.end_date - now().date()
-            return delta.days
-        return None
-
-    def is_due_soon(self):
-        remaining = self.remainig_days()
-        return remaining is not None and remaining <= 30
-
-    def generate_invoice(self):
-        invoice = Invoice.objects.create(
-            contract=self,
-            issue_date=now().date(),
-            due_date=now().date() + timedelta(days=30),
-            amount=self.monthly_rent,
-        )
-        return invoice
-
-    def __str__(self):
-        return f'عقد إيجار: {selef.unit} - {self.tenant}'
-
-    class Meta:
-        verbose_name = _('عقد إيجار')
-        verbose_name_plural = _('عقود الإيجار')
-        ordering = ['-start_date']
-class Invoice(models.Model):
-    contract = models.ForeignKey(
-        'LeaseContract', 
-        on_delete=models.CASCADE,
-        related_name='invoices',
-        verbose_name=_('العقد')
-    )
-    issue_date = models.DateField(
-        default=now,
-        verbose_name=_('تاريخ الإصدار')
-    )
-    due_date = models.DateField(
-        verbose_name=_('تاريخ الاستحقاق')
-    )
-    amount = models.DecimalField(
-        max_digits=10, 
-        decimal_places=2, 
-        verbose_name=_('المبلغ')
-    )
-    is_paid = models.BooleanField(
-        default=False, 
-        verbose_name=_('مدفوعة')
-    )
-
-    def days_until_due(self):
-        if self.due_date:
-            delta = self.due_date - now().date()
-            return delta.days
-        return None
-
-    def __str__(self):
-        return f'فاتورة {self.id} - {self.contract.unit.number} - {self.amount}'
-
-    class Meta:
-        verbose_name = _('فاتورة')
-        verbose_name_plural = _('الفواتير')
-        ordering = ['-issue_date']
-        indexes = [
-            models.Index(fields=['contract', 'due_date']),
-        ]
-
-class Reminder(models.Model):
-    tenant = models.ForeignKey(
-        'Tenant', 
-        on_delete=models.CASCADE,
-        related_name='reminders',
-        verbose_name=_('الأشخاص')
-    )
-    contract = models.ForeignKey(
-        'LeaseContract', 
-        on_delete=models.CASCADE,
-        related_name='reminders',
-        verbose_name=_('العقد')
-    )
-    message = models.TextField(
-        verbose_name=_('الرسالة التذكير')
-    )
-    created_at = models.DateTimeField(
-        auto_now_add=True, 
-        verbose_name=_('تاريخ الإنشاء')
-    )
-    is_sent = models.BooleanField(
-        default=False, 
-        verbose_name=_('تم إرساله')
-    )
-
-    def __str__(self):
-        return f'تذكير {self.tenant.full_name}'
-
-    class Meta:
-        verbose_name = _('تذكير')
-        verbose_name_plural = _('التذكيرات')
-        ordering = ['-created_at']
-        indexes = [
-            models.Index(fields=['tenant', 'is_sent']),
-        ]
-
-class Notification(models.Model):
-    message = models.TextField(
-        verbose_name=_('الرسالة')
-    )
-    is_read = models.BooleanField(
-        default=False, 
-        verbose_name=_('مقروء')
-    )
-    created_at = models.DateTimeField(
-        auto_now_add=True, 
-        verbose_name=_('تاريخ الإنشاء')
-    )
-    related_model = models.CharField(
-        max_length=100, 
-        blank=True,
-        null=True,
-        verbose_name=_('النموذج المرتبط'),
-        help_text=_('اسم النموذج المرتبط (مثل: LeaseContract أو Invoce)')
-    )
-    related_id = models.PositiveIntegerField(
-        blank=True, 
-        null=True, 
-        verbose_name=_('المعرف المرتبط'),
-        help_text=_('معرف العنصر المرتبط في النموذج')
-    )
-
-    def __str__(self):
-        return f'إشعار: {self.message[:20]}'
-
-    class Meta:
-        verbose_name = _('إشعار')
-        verbose_name_plural = _('الإشعارات')
-        ordering = ['-created_at']
 
 class Subscription(models.Model):
     tenant = models.ForeignKey(
@@ -505,6 +521,3 @@ class Report(models.Model):
         verbose_name = _('تقرير')
         verbose_name_plural = _('التقارير')
         ordering = ['-created_at']
-
-class Payment(models.Model):
-    pass
