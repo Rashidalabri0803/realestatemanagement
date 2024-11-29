@@ -5,8 +5,24 @@ from django.db import models
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 
+class BaseModel(models.Model):
+    is_deleted = models.BooleanField(
+        default=False,
+        verbose_name=_('محذوف'),
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name=_('تاریخ الانشاء'),
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name=_('تاريخ التحديث'),
+    )
 
-class Building(models.Model):
+    class Meta:
+        abstract = True
+        
+class Building(BaseModel):
     name = models.CharField(
         max_length=200, 
         verbose_name=_('اسم المبني')
@@ -25,10 +41,10 @@ class Building(models.Model):
         auto_now=True, verbose_name=_('تاريخ التحديث'))
 
     def total_units(self):
-        return self.units.count()
+        return self.units.filter(is_deleted=False).count()
 
     def total_rent(self):
-        return sum(unit.monlthly_rent for unit in self.units.filter(status='rented'))
+        return sum(unit.monlthly_rent for unit in self.units.filter(status='rented', is_deleted=False))
 
     def yearly_rent(self):
         return self.total_rent() * 12
@@ -44,7 +60,7 @@ class Building(models.Model):
             models.Index(fields=['name']),
         ]
 
-class Unit(models.Model):
+class Unit(BaseModel):
     UNIT_TYPE_CHOICES = (
         ('Office', _('مكتب')),
         ('Apartment', _('شقة')),
@@ -104,6 +120,9 @@ class Unit(models.Model):
     def yearly_rent(self):
         return self.monthly_rent * 12
 
+    def is_availble(self):
+        return self.status == 'Available'
+
     def __str__(self):
         return f'{self.get_unit_type_display()} - {self.number}'
 
@@ -115,7 +134,7 @@ class Unit(models.Model):
             models.Index(fields=['status', 'unit_type']),
         ]
 
-class Tenant(models.Model):
+class Tenant(BaseModel):
     full_name = models.CharField(
         max_length=200, 
         verbose_name=_('الاسم الكامل')
@@ -155,7 +174,7 @@ class Tenant(models.Model):
             models.Index(fields=['phone_number']),
         ]
 
-class LeaseContract(models.Model):
+class LeaseContract(BaseModel):
     unit = models.OneToOneField(
         Unit, 
         on_delete=models.CASCADE,
@@ -205,7 +224,7 @@ class LeaseContract(models.Model):
         verbose_name_plural = _('عقود الإيجار')
         ordering = ['-start_date']
 
-class Invoice(models.Model):
+class Invoice(BaseModel):
     contract = models.ForeignKey(
         'LeaseContract', 
         on_delete=models.CASCADE,
@@ -228,12 +247,19 @@ class Invoice(models.Model):
         default=False, 
         verbose_name=_('مدفوعة')
     )
+    late_fee = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2,
+        default=0,
+        verbose_name=_('غرامة التأخير')
+    )
 
-    def days_until_due(self):
-        if self.due_date:
-            delta = self.due_date - now().date()
-            return delta.days
-        return None
+    def calculate_late_fee(self):
+        if not self.is_paid and self.due_date < now().date():
+            days_late = (now().date() - self.due_date).days
+            self.late_fee = days_late * 5
+            return self.late_fee
+        return 0
 
     def __str__(self):
         return f"فاتورة {self.id} - {self.amount} ({'مدفوعة' if self.is_paid else 'غير مدفوعة'})"
@@ -243,7 +269,7 @@ class Invoice(models.Model):
         verbose_name_plural = _('الفواتير')
         ordering = ['-issue_date']
 
-class Payment(models.Model):
+class Payment(BaseModel):
     conract = models.ForeignKey(
         'LeaseContract', 
         on_delete=models.CASCADE,
@@ -274,43 +300,8 @@ class Payment(models.Model):
         indexes = [
             models.Index(fields=['conract', 'payment_date'])
         ]
-        
-class MaintenanceRequest(models.Model):
-    unit = models.ForeignKey(
-        Unit, 
-        on_delete=models.CASCADE,
-        related_name= 'maintenance_requests',
-        verbose_name=_('الوحدة')
-    )
-    description = models.TextField(
-        verbose_name=_('وصف المشكلة')
-    )
-    request_date = models.DateField(
-        default=now,
-        verbose_name=_('تاريخ الطلب')
-    )
-    is_resolved = models.BooleanField(
-        default=False, 
-        verbose_name=_('تمت المعالجة')
-    )
-    resolved_date = models.DateField(
-        blank=True, 
-        null=True, 
-        verbose_name=_('تاريخ المعالجة')
-    )
 
-    def __str__(self):
-        return f'طلب صيانة للوحدة {self.unit.number} - {self.request_date}'
-
-    class Meta:
-        verbose_name = _('طلب صيانة')
-        verbose_name_plural = _('طلبات الصيانة')
-        ordering = ['-request_date']
-        indexes = [
-            models.Index(fields=['unit', 'is_resolved']),
-        ]
-
-class Expense(models.Model):
+class Expense(BaseModel):
     building = models.ForeignKey(
         Building, 
         on_delete=models.CASCADE,
@@ -341,7 +332,7 @@ class Expense(models.Model):
             models.Index(fields=['building', 'date']),
         ]
 
-class Reminder(models.Model):
+class Reminder(BaseModel):
     tenant = models.ForeignKey(
         'Tenant', 
         on_delete=models.CASCADE,
@@ -375,7 +366,8 @@ class Reminder(models.Model):
         indexes = [
             models.Index(fields=['tenant', 'is_sent']),
         ]
-class Notification(models.Model):
+
+class Notification(BaseModel):
     message = models.TextField(
         verbose_name=_('الرسالة')
     )
@@ -406,8 +398,8 @@ class Notification(models.Model):
         verbose_name = _('إشعار')
         verbose_name_plural = _('الإشعارات')
         ordering = ['-created_at']
-        
-class AuditLog(models.Model):
+
+class AuditLog(BaseModel):
     action = models.CharField(
         max_length=200, 
         verbose_name=_('الإجراء')
@@ -441,56 +433,7 @@ class AuditLog(models.Model):
         verbose_name_plural = _('السجلات')
         ordering = ['-timestamp']
 
-class Subscription(models.Model):
-    tenant = models.ForeignKey(
-        'Tenant', 
-        on_delete=models.CASCADE,
-        related_name='subscriptions',
-        verbose_name=_('المستأجر')
-    )
-    name = models.CharField(
-        max_length=200, 
-        verbose_name=_('اسم الاشتراك')
-    )
-    description = models.TextField(
-        blank=True,
-        null=True,
-        verbose_name=_('وصف')
-    )
-    price = models.DecimalField(
-        max_digits=10, 
-        decimal_places=2, 
-        verbose_name=_('سعر الاشتراك الشهري')
-    )
-    start_date = models.DateField(
-        default=now,
-        verbose_name=_('تاريخ البدء')
-    )
-    end_date = models.DateField(
-        blank=True,
-        null=True,
-        verbose_name=_('تاريخ النهاية')
-    )
-    is_active = models.BooleanField(
-        default=True, 
-        verbose_name=_('نشط')
-    )
-
-    def remaining_days(self):
-        if self.end_date:
-            delta = self.end_date - now().date()
-            return delta.days
-        return None
-
-    def __str__(self):
-        return f'اشتراك: {self.name} - {self.tenant.full_name}'
-
-    class Meta:
-        verbose_name = _('اشتراك')
-        verbose_name_plural = _('الاشتراكات')
-        ordering = ['-start_date']
-
-class Report(models.Model):
+class Report(BaseModel):
     name = models.CharField(
         max_length=200, 
         verbose_name=_('اسم التقرير')
@@ -521,3 +464,111 @@ class Report(models.Model):
         verbose_name = _('تقرير')
         verbose_name_plural = _('التقارير')
         ordering = ['-created_at']
+        
+class MaintenanceRequest(BaseModel):
+    PRIORITY_CHOICES = [
+        ('Low', _('أقل')),
+        ('Medium', _('متوسط')),
+        ('High', _('أعلى')),
+    ]
+    unit = models.ForeignKey(
+        Unit, 
+        on_delete=models.CASCADE,
+        related_name= 'maintenance_requests',
+        verbose_name=_('الوحدة')
+    )
+    description = models.TextField(
+        verbose_name=_('وصف المشكلة')
+    )
+    request_date = models.DateField(
+        default=now,
+        verbose_name=_('تاريخ الطلب')
+    )
+    priority = models.CharField(
+        max_length=50, 
+        choices=PRIORITY_CHOICES,
+        default='medium',
+        verbose_name=_('الأولوية')
+    )
+    is_resolved = models.BooleanField(
+        default=False, 
+        verbose_name=_('تمت المعالجة')
+    )
+    resolved_date = models.DateField(
+        blank=True, 
+        null=True, 
+        verbose_name=_('تاريخ المعالجة')
+    )
+
+    def __str__(self):
+        return f'طلب صيانة للوحدة {self.unit.number} - {self.request_date}'
+
+    class Meta:
+        verbose_name = _('طلب صيانة')
+        verbose_name_plural = _('طلبات الصيانة')
+        ordering = ['-request_date']
+        indexes = [
+            models.Index(fields=['unit', 'is_resolved']),
+        ]
+
+class MaintenanceFeedback(BaseModel):
+    maintenance_request = models.OneToOneField(
+        MaintenanceRequest, 
+        on_delete=models.CASCADE,
+        related_name='feedback',
+        verbose_name=_('طلب الصيانة')
+    )
+    rating = models.PositiveIntegerField(
+        verbose_name=_('التقييم')
+        help_text=_('من 1 الى 5')
+    )
+    comments = models.TextField(
+        blank=True, 
+        null=True, 
+        verbose_name=_('التعليقات')
+    )
+
+    def __str__(self):
+        return f'تقييم {self.maintenance_request.unit.number} - {self.rating}'
+
+    class Meta:
+        verbose_name = _('تقييم الصيانة')
+        verbose_name_plural = _('التقييمات الصيانة')
+        ordering = ['-created_date']
+
+class Subscription(BaseModel):
+    tenant = models.ForeignKey(
+        'Tenant', 
+        on_delete=models.CASCADE,
+        related_name='subscriptions',
+        verbose_name=_('المستأجر')
+    )
+    service_name = models.CharField(
+        max_length=200, 
+        verbose_name=_('اسم الخدمة')
+    )
+    monthly_fee = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2, 
+        verbose_name=_('التكلفة الشهري')
+    )
+    start_date = models.DateField(
+        default=now,
+        verbose_name=_('تاريخ البدء')
+    )
+    end_date = models.DateField(
+        verbose_name=_('تاريخ النهاية')
+    )
+    is_active = models.BooleanField(
+        default=True, 
+        verbose_name=_('نشط')
+    )
+    
+    def __str__(self):
+        return f"اشتراك {self.tenant.full_name} - {self.service_name}"
+
+    class Meta:
+        verbose_name = _('اشتراك')
+        verbose_name_plural = _('الاشتراكات')
+        ordering = ['-start_date']
+           
