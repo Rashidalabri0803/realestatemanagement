@@ -192,7 +192,8 @@ class LeaseContract(models.Model):
     def generate_invoice(self):
         return Invoice.objects.create(
             contract=self,
-            issue_date=now(),.date() + timedelta(days=30),
+            issue_date=now().date(),
+            due_date=now().date() + timedelta(days=30),
             amount=self.monthly_rent
         )
 
