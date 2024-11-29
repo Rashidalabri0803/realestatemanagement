@@ -2,19 +2,17 @@ from django.contrib import admin
 from django.utils.html import format_html
 
 from .models import (
-    Building,
-    Unit,
-    Tenant,
-    LeaseContract,
-    Payment,
-    MaintenanceRequest,
-    Expense,
-    Notification,
     AuditLog,
+    Building,
+    Expense,
     Invoice,
+    LeaseContract,
+    MaintenanceRequest,
     Reminder,
-    Subscription,
     Report,
+    Subscription,
+    Tenant,
+    Unit,
 )
 
 
@@ -118,9 +116,9 @@ class ReminderAdmin(admin.ModelAdmin):
 
 @admin.register(Subscription)
 class SubscriptionAdmin(admin.ModelAdmin):
-    list_display = ('name', 'tenant', 'price', 'start_date', 'end_date', 'is_active')
+    list_display = ('tenant', 'start_date', 'end_date')
     search_fields = ('name', 'tenant__full_name')
-    list_filter = ('is_active', 'start_date', 'end_date')
+    list_filter = ('start_date', 'end_date')
 
 @admin.register(MaintenanceRequest)
 class MaintenanceRequestAdmin(admin.ModelAdmin):
@@ -144,7 +142,7 @@ class ReportAdmin(admin.ModelAdmin):
     def generate_report(self, request, queryset):
         for report in queryset:
             report.generate_report()
-        self.messege_user(queryset, f'تم توليد التقارير بنجاح. ')
+        self.messege_user(queryset, 'تم توليد التقارير بنجاح. ')
 
 @admin.register(AuditLog)
 class AuditLogAdmin(admin.ModelAdmin):
