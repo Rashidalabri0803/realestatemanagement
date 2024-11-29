@@ -519,7 +519,7 @@ class MaintenanceFeedback(BaseModel):
         verbose_name=_("طلب الصيانة")
     )
     rating = models.PositiveIntegerField(
-        verbose_name=_("التقييم")
+        verbose_name=_("التقييم"),
         help_text=_("من 1 الى 5")
     )
     comments = models.TextField(
