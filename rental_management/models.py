@@ -520,7 +520,7 @@ class MaintenanceFeedback(BaseModel):
     )
     rating = models.PositiveIntegerField(
         verbose_name=_("التقييم"),
-        help_text=_("من 1 الى 5")
+        help_text=_("من 1 الى 5"),
     )
     comments = models.TextField(
         blank=True, 
@@ -534,7 +534,6 @@ class MaintenanceFeedback(BaseModel):
     class Meta:
         verbose_name = _("تقييم الصيانة")
         verbose_name_plural = _("التقييمات الصيانة")
-        ordering = ["-created_date"]
 
 class Subscription(BaseModel):
     tenant = models.ForeignKey(
