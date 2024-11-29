@@ -497,7 +497,7 @@ class Report(BaseModel):
     class Meta:
         verbose_name = _("تقرير")
         verbose_name_plural = _("التقارير")
-        ordering = ["-gereated_at"]
+        ordering = ["-generated_at"]
 
 class Subscription(BaseModel):
     tenant = models.ForeignKey(
@@ -691,7 +691,7 @@ class AnnualRentDetail(BaseModel):
     class Meta:
         verbose_name = _("تفاصيل الإيجار السنوي")
         verbose_name_plural = _("تفاصيل الإيجار السنوي")
-        ordering = ["-yeaer", "unit"]
+        ordering = ["-year", "unit"]
         indexes = [
             models.Index(fields=["unit", "year"]),
         ]
@@ -829,7 +829,7 @@ class ScheduledReminder(BaseModel):
         verbose_name=_("المستأجر")
     )
     contract = models.ForeignKey(
-        "Contract", 
+        "LeaseContract", 
         on_delete=models.CASCADE,
         related_name="scheduled_reminders",
         verbose_name=_("العقد")
@@ -1005,4 +1005,3 @@ class MessageLog(BaseModel):
     class Meta:
         verbose_name = _("سجل الرسائل")
         verbose_name_plural = _("سجلات الرسائل")
-        ordering = ["-sent_date"]

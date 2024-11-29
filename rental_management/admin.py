@@ -55,14 +55,14 @@ class LeaseContractAdmin(admin.ModelAdmin):
 
 @admin.register(Invoice)
 class InvoiceAdmin(admin.ModelAdmin):
-    list_display = ('contract', 'issue_date', 'due_date', 'amount', 'is_paid', 'late_fee')
+    list_display = ('contract', 'issue_date', 'due_date', 'amount', 'late_fee')
     search_fields = ('contract__tenant__full_name', 'contract__unit__number')
-    list_filter = ('is_paid', 'due_date',)
+    list_filter = ('due_date',)
 
 @admin.register(Payment)
 class PaymentAdmin(admin.ModelAdmin):
-    list_display = ('contract', 'amount', 'payment_date', 'status')
-    search_fields = ('contract__tenant__full_name', 'contract__unit__number')
+    list_display = ('conract', 'amount', 'payment_date', 'status')
+    search_fields = ('conract__tenant__full_name', 'conract__unit__number')
     list_filter = ('status', 'payment_date',)
 
 @admin.register(Reminder)
@@ -103,9 +103,9 @@ class LatePaymentAdmin(admin.ModelAdmin):
 
 @admin.register(MaintenanceRequest)
 class MaintenanceRequestAdmin(admin.ModelAdmin):
-    list_display = ('unit', 'description', 'priorty', 'is_resolved', 'request_date')
+    list_display = ('unit', 'description', 'priority', 'is_resolved', 'request_date')
     search_fields = ('unit__number', 'description')
-    list_filter = ('priorty', 'is_resolved', 'request_date',)
+    list_filter = ('priority', 'is_resolved', 'request_date',)
 
 @admin.register(MaintenanceFeedback)
 class MaintenanceFeedbackAdmin(admin.ModelAdmin):
@@ -145,13 +145,13 @@ class ReminderLogAdmin(admin.ModelAdmin):
 
 @admin.register(ScheduledReminder)
 class ScheduledReminderAdmin(admin.ModelAdmin):
-    list_display = ('tenant', 'contract', 'scheduled_date', 'is_sent')
+    list_display = ('tenant', 'scheduled_date', 'is_sent')
     search_fields = ('tenant__full_name', 'contract__unit__number')
     list_filter = ('is_sent', 'scheduled_date',)
 
 @admin.register(UserRole)
 class UserRoleAdmin(admin.ModelAdmin):
-    list_display = ('name', 'description')
+    list_display = ('name', 'descripton')
     search_fields = ('name',)
 
 @admin.register(UserProfile)
@@ -172,6 +172,5 @@ class SystemStatisticsAdmin(admin.ModelAdmin):
 
 @admin.register(MessageLog)
 class MessageLogAdmin(admin.ModelAdmin):
-    list_display = ('recipient', 'message', 'sent_date', 'status', 'response_details')
+    list_display = ('recipient', 'response_details')
     search_fields = ('recipient', 'message', 'status')
-    list_filter = ('status', 'sent_date',)
