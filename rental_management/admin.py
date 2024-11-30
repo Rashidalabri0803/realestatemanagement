@@ -1,5 +1,33 @@
 from django.contrib import admin
-from .models import Building, Unit, Tenant, LeaseContract, Invoice, Payment, Reminder, Notification, AuditLog, Report, Subscription, LatePayment, MaintenanceRequest, MaintenanceFeedback, AnnualRentDetail, SystemEvent, Feedback, DailyPaymentLog, ReminderLog, ScheduledReminder, UserRole, UserProfile, SystemSettings, SystemStatistics, MessageLog
+
+from .models import (
+    AnnualRentDetail,
+    AuditLog,
+    Building,
+    DailyPaymentLog,
+    Feedback,
+    Invoice,
+    LatePaymnet,
+    LeaseContract,
+    MaintenanceFeedback,
+    MaintenanceRequest,
+    MessageLog,
+    Notification,
+    Payment,
+    Reminder,
+    ReminderLog,
+    Report,
+    ScheduledReminder,
+    Subscription,
+    SystemEvent,
+    SystemSettings,
+    SystemStatistics,
+    Tenant,
+    Unit,
+    UserProfile,
+    UserRole,
+)
+
 
 @admin.register(Building)
 class BuildingAdmin(admin.ModelAdmin):
@@ -67,7 +95,7 @@ class SubscriptionAdmin(admin.ModelAdmin):
     search_fields = ('tenant__full_name', 'service_name')
     list_filter = ('service_type', 'is_active')
 
-@admin.register(LatePayment)
+@admin.register(LatePaymnet)
 class LatePaymentAdmin(admin.ModelAdmin):
     list_display = ('invoice', 'days_late', 'penalty', 'created_at')
     search_fields = ('invoice__contract__tenant__full_name', 'invoice__contract__unit__number')
