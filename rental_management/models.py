@@ -653,3 +653,170 @@ class MaintenanceFeedback(BaseModel):
         verbose_name = _("تقييم الصيانة")
         verbose_name_plural = _("التقييمات الصيانة")
         ordering = ["-created_at"]
+
+class AnnualRentDetail(BaseModel):
+    unit = models.ForeignKey(
+        Unit, 
+        on_delete=models.CASCADE,
+        related_name="annual_rent_details",
+        verbose_name=_("الوحدة")
+    )
+    year = models.PositiveIntegerField(
+        verbose_name=_("السنة")
+    )
+    total_rent = models.DecimalField(
+        max_digits=12, 
+        decimal_places=2, 
+        verbose_name=_("الإيجار السنوي")
+    )
+    paid_amount = models.DecimalField(
+        max_digits=12, 
+        decimal_places=2,
+        default=0,
+        verbose_name=_("المبلغ المدفوع")
+    )
+    outstanding_amount = models.DecimalField(
+        max_digits=12, 
+        decimal_places=2, 
+        verbose_name=_("المبلغ المستحق")
+    )
+
+    def calculate_outstanding(self):
+        self.outstanding_amount = self.total_rent - self.paid_amount
+        self.save()
+        
+    def __str__(self):
+        return f"تفاصيل الإيجار السنوي {self.unit.number}"
+
+    class Meta:
+        verbose_name = _("تفاصيل الإيجار السنوي")
+        verbose_name_plural = _("تفاصيل الإيجار السنوي")
+        ordering = ["-yeaer", "unit"]
+        indexes = [
+            models.Index(fields=["unit", "year"]),
+        ]
+
+class SystemEvent(BaseModel):
+    EVENT_TYPE_CHOICES = [
+        ("info", _("معلومات")),
+        ("warning", _("تحذير")),
+        ("error", _("خطأ")),
+    ]
+    event_type = models.CharField(
+        max_length=50, 
+        choices=EVENT_TYPE_CHOICES,
+        verbose_name=_("نوع الحدث")
+    )
+    description = models.TextField(
+        verbose_name=_("الوصف")
+    )
+    timestamp = models.DateTimeField(
+        auto_now_add=True, 
+        verbose_name=_("وقت الحدث")
+    )
+
+    def __str__(self):
+        return f"حدث: {self.get_event_display()} - {self.timestamp}"
+
+    class Meta:
+        verbose_name = _("حدث النظام")
+        verbose_name_plural = _("أحداث النظام")
+        ordering = ["-timestamp"]
+        indexes = [
+            models.Index(fields=["event_type", "timestamp"]),
+        ]
+
+class Feedback(BaseModel):
+    tenant = models.ForeignKey(
+        "Tenant", 
+        on_delete=models.CASCADE,
+        related_name="feedbacks",
+        verbose_name=_("المستأجر")
+    )
+    unit = models.ForeignKey(
+        Unit, 
+        on_delete=models.CASCADE,
+        related_name="feedbacks",
+        verbose_name=_("الوحدة")
+    )
+    comment = models.TextField(
+        verbose_name=_("التعليق")
+    )
+    rating = models.PositiveIntegerField(
+        verbose_name=_("التقييم"),
+        default=5,
+        help_text=_("من 1 الى 5"),
+    )
+
+    def __str__(self):
+        return f"تعليق: {self.tenant.full_name} - {self.unit.number}"
+
+    class Meta:
+        verbose_name = _("تعليق")
+        verbose_name_plural = _("التعليقات")
+        ordering = ["-created_at"]
+
+class DailyPaymentLog(BaseModel):
+    date = models.DateField(
+        default=now,
+        verbose_name=_("التاريخ")
+    )
+    total_payments = models.DecimalField(
+        max_digits=12, 
+        decimal_places=2,
+        default=0,
+        verbose_name=_("إجمالي المدفوعات")
+    )
+    total_invoices = models.PositiveIntegerField(
+        default=0,
+        verbose_name=_("عدد الفواتير")
+    )
+    total_late_payments = models.PositiveIntegerField(
+        default=0,
+        verbose_name=_("عدد المدفوعات المتأخرة")
+    )
+
+    def __str__(self):
+        return f"سجل الدفع اليومي - {self.date}"
+
+    class Meta:
+        verbose_name = _("سجل الدفع اليومي")
+        verbose_name_plural = _("سجلات الدفع اليومية")
+        ordering = ["-date"]
+        indexes = [
+            models.Index(fields=["date"]),
+        ]
+
+class ReminderLog(BaseModel):
+    reminder = models.ForeignKey(
+        "Reminder", 
+        on_delete=models.CASCADE,
+        related_name="logs",
+        verbose_name=_("التذكير")
+    )
+    sent_date = models.DateField(
+        default=now,
+        verbose_name=_("تاريخ الإرسال")
+    )
+    status = models.CharField(
+        max_length=50, 
+        choices=[
+            ("success", _("نجاح")),
+            ("failed", _("فشل")),
+        ],
+        default="success",
+        verbose_name=_("الحالة")
+    )
+    response_message = models.TextField(
+        blank=True, 
+        null=True, 
+        verbose_name=_("رسالة الرد")
+    )
+
+    def __str__(self):
+        return f"سجل تذكير: {self.reminder.id} - {self.get_status_display()}"
+
+    class Meta:
+        verbose_name = _("سجل تذكير")
+        verbose_name_plural = _("سجلات التذكيرات")
+        ordering = ["-sent_date"]
