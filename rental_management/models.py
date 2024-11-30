@@ -1,4 +1,3 @@
-
 from datetime import timedelta
 
 from django.db import models
@@ -36,10 +35,6 @@ class Building(BaseModel):
         null=True, 
         verbose_name=_("صورة المبني")
     )
-    created_at = models.DateTimeField(
-        auto_now_add=True, verbose_name=_("تاريخ الإنشاء"))
-    updated_at = models.DateTimeField(
-        auto_now=True, verbose_name=_("تاريخ التحديث"))
 
     def total_units(self):
         return self.units.filter(is_deleted=False).count()
@@ -57,6 +52,12 @@ class Building(BaseModel):
     def yearly_rent(self):
         return self.total_rent() * 12
 
+    def monthly_income(self):
+        return self.total_rent() - sum(expense.amount for expense in self.expenses.filter(is_deleted=False))
+
+    def yearly_income(self):
+        return self.monthly_income() * 12
+
     def __str__(self):
         return self.name
 
@@ -66,7 +67,6 @@ class Building(BaseModel):
         ordering = ["name"]
         indexes = [
             models.Index(fields=["name"]),
-            models.Index(fields=["address"]),
         ]
 
 class Unit(BaseModel):
@@ -79,6 +79,7 @@ class Unit(BaseModel):
         ("Available", _("متاحة")),
         ("Rented", _("مؤجرة")),
         ("Maintenance", _("تحت الصيانة")),
+        ("Reserved", _("محجوزة")),
     )
     
     building = models.ForeignKey(
@@ -122,14 +123,6 @@ class Unit(BaseModel):
         blank=True, 
         null=True, 
         verbose_name=_("صورة الوحدة")
-    )
-    created_at = models.DateTimeField(
-        auto_now_add=True, 
-        verbose_name=_("تاريخ الإنشاء")
-    )
-    updated_at = models.DateTimeField(
-        auto_now=True, 
-        verbose_name=_("تاريخ التحديث")
     )
 
     def yearly_rent(self):
@@ -178,6 +171,7 @@ class Tenant(BaseModel):
         null=True, 
         verbose_name=_("ملاحظات")
     )
+    
     def __str__(self):
         return self.full_name
 
@@ -240,6 +234,11 @@ class LeaseContract(BaseModel):
         ordering = ["-start_date"]
 
 class Invoice(BaseModel):
+    STATUS_CHOICES = [
+        ("Pendding", _("قيد الانتظار")),
+        ("Paid", _("مدفوعة")),
+        ("Overdue", _("متأخرة")),
+    ]
     contract = models.ForeignKey(
         "LeaseContract", 
         on_delete=models.CASCADE,
@@ -258,9 +257,11 @@ class Invoice(BaseModel):
         decimal_places=2, 
         verbose_name=_("المبلغ")
     )
-    is_paid = models.BooleanField(
-        default=False, 
-        verbose_name=_("مدفوعة")
+    status = models.CharField(
+        max_length=50, 
+        choices=STATUS_CHOICES,
+        default="Pendding",
+        verbose_name=_("الحالة")
     )
     late_fee = models.DecimalField(
         max_digits=10, 
@@ -276,21 +277,28 @@ class Invoice(BaseModel):
             return self.late_fee
         return 0
 
-    def is_late(self):
-        return not self.is_paid and self.due_date < now().date()
+    def is_overdue(self):
+        if not self.status == "Paid" and self.due_date < now().date():
+            self.status = "Overdue"
+            self.save()
+        return self.status == "Overdue"
 
     def __str__(self):
-        return f"فاتورة {self.id} - {self.amount} ({'مدفوعة' if self.is_paid else 'غير مدفوعة'})"
+        return f"فاتورة {self.id} - {self.amount} ({self.get_status_display()})"
 
     class Meta:
         verbose_name = _("فاتورة")
         verbose_name_plural = _("الفواتير")
         ordering = ["-issue_date"]
         indexes = [
-            models.Index(fields=["contract", "due_date", "is_paid"]),
+            models.Index(fields=["contract", "status", "due_date"]),
         ]
 
 class Payment(BaseModel):
+    STATUS_CHOICES = [
+        ("Successful", _("ناجحة")),
+        ("Failed", _("فشلت")),
+    ]
     conract = models.ForeignKey(
         "LeaseContract", 
         on_delete=models.CASCADE,
@@ -306,91 +314,27 @@ class Payment(BaseModel):
         default=now,
         verbose_name=_("تاريخ الدفع")
     )
+    status = models.CharField(
+        max_length=50, 
+        choices=STATUS_CHOICES,
+        default="Successful",
+        verbose_name=_("الحالة")
+    )
     description = models.TextField(
         blank=True, 
         null=True, 
         verbose_name=_("وصف")
     )
+    
     def __str__(self):
-        return f"مدفوعات: {self.conract.unit.number} - {self.amount} ({self.payment_date})"
+        return f"مدفوعات: {self.conract.unit.number} - {self.amount} ({self.get_status_display()})"
 
     class Meta:
         verbose_name = _("مدفوعة")
         verbose_name_plural = _("المدفوعات")
         ordering = ["-payment_date"]
         indexes = [
-            models.Index(fields=["conract", "payment_date"])
-        ]
-
-class LatePaymnet(BaseModel):
-    invoice = models.OneToOneField(
-        "Invoice", 
-        on_delete=models.CASCADE,
-        related_name="late_payments",
-        verbose_name=_("الفاتورة")
-    )
-    days_late = models.PositiveIntegerField(
-        verbose_name=_("عدد الأيام المتأخرة")
-    )
-    penalty = models.DecimalField(
-        max_digits=10, 
-        decimal_places=2, 
-        verbose_name=_("غرامة التأخير")
-    )
-    created_at = models.DateTimeField(
-        auto_now_add=True, 
-        verbose_name=_("تاريخ التسجيل")
-    )
-
-    def __str__(self):
-        return f"غرامة: {self.penalty} - {self.days_late} يوم ({self.invoice})"
-
-    class Meta:
-        verbose_name = _("مدفوعات متأخرة")
-        verbose_name_plural = _("مدفوعات متأخرة")
-        ordering = ["-created_at"]
-
-class Expense(BaseModel):
-    EXPENSE_TYPE_CHOICES = [
-        ("Maintenance", _("صيانة")),
-        ("Utilities", _("فواتير خدمات")),
-        ("Improvement", _("تحسينات")),
-        ("Other", _("أخرى")),
-    ]
-    building = models.ForeignKey(
-        Building, 
-        on_delete=models.CASCADE,
-        related_name="expenses",
-        verbose_name=_("المبنى")
-    )
-    description = models.TextField(
-        verbose_name=_("الوصف")
-    )
-    expense_type = models.CharField(
-        max_length=50, 
-        choices=EXPENSE_TYPE_CHOICES,
-        default="Other",
-        verbose_name=_("نوع المصروف")
-    )
-    amount = models.DecimalField(
-        max_digits=10, 
-        decimal_places=2, 
-        verbose_name=_("المبلغ")
-    )
-    date = models.DateField(
-        default=now,
-        verbose_name=_("التاريخ")
-    )
-
-    def __str__(self):
-        return f"مصروف {self.description} - {self.amount} ({self.expense_type})"
-
-    class Meta:
-        verbose_name = _("مصروف")
-        verbose_name_plural = _("المصاريف")
-        ordering = ["-date"]
-        indexes = [
-            models.Index(fields=["building", "expense_type", "date"]),
+            models.Index(fields=["conract", "payment_date", "status"])
         ]
 
 class Reminder(BaseModel):
@@ -405,6 +349,12 @@ class Reminder(BaseModel):
         on_delete=models.CASCADE,
         related_name="reminders",
         verbose_name=_("العقد")
+    )
+    invoice = models.ForeignKey(
+        "Invoice", 
+        on_delete=models.CASCADE,
+        related_name="reminders",
+        verbose_name=_("الفاتورة")
     )
     message = models.TextField(
         verbose_name=_("الرسالة التذكير")
@@ -438,15 +388,13 @@ class Notification(BaseModel):
     )
     priority = models.CharField(
         max_length=50, 
-        choices=PRIORITY_CHOICES,
-        default="Normal",
+        choices= [
+            ("low", _("منخفضة")),
+            ("meduim", _("متوسطة")),
+            ("high", _("عالية")),
+        ],
+        default="low",
         verbose_name=_("الأولية")
-    )
-    category = models.CharField(
-        max_length=100,
-        blank=True,
-        null=True,
-        verbose_name=_("الفئة")
     )
     related_model = models.CharField(
         max_length=100, 
@@ -460,6 +408,10 @@ class Notification(BaseModel):
         verbose_name=_("المعرف المرتبط"),
     )
 
+    def mark_as_read(self):
+        self.is_read = True
+        self.save()
+
     def __str__(self):
         return f"إشعار: {self.message[:20]}{'...' if len(self.message) > 20 else ''}"
 
@@ -467,6 +419,9 @@ class Notification(BaseModel):
         verbose_name = _("إشعار")
         verbose_name_plural = _("الإشعارات")
         ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["is_read", "priority"]),
+        ]
 
 class AuditLog(BaseModel):
     action = models.CharField(
@@ -483,6 +438,11 @@ class AuditLog(BaseModel):
     user = models.CharField(
         max_length=200, 
         verbose_name=_("المستخدم")
+    )
+    ip_address = models.GenericIPAddressField(
+        blank=True,
+        null=True,
+        verbose_name=_("عنوان IP")
     )
     timestamp = models.DateTimeField(
         auto_now_add=True, 
@@ -507,38 +467,127 @@ class Report(BaseModel):
         max_length=200, 
         verbose_name=_("اسم التقرير")
     )
-    description = models.TextField(
+    report_type = models.CharField(
+        max_length=100, 
+        verbose_name=_("نوع التقرير")
+    )
+    filters = models.TextField(
         blank=True, 
         null=True, 
-        verbose_name=_("وصف")
+        verbose_name=_("الفلاتر")
     )
-    created_at = models.DateTimeField(
+    content = models.TextField(
+        verbose_name=_("محتوى التقرير")
+    )
+    generated_at = models.DateTimeField(
         auto_now_add=True, 
         verbose_name=_("تاريخ الإنشاء")
     )
-    last_generated = models.DateTimeField(
-        blank=True, 
-        null=True, 
-        verbose_name=_("آخر توليد")
+    is_scheduled = models.BooleanField(
+        default=False, 
+        verbose_name=_("مجدول")
     )
 
-    def generate_report(self):
-        self.last_generated = now()
-        self.save()
-
+    def generate_summary(self):
+        return f"تقرير: {self.name} - نوع: {self.report_type} - أنشي في: {self.generated_at}"
+        
     def __str__(self):
-        return f"تقرير: {self.name}"
+        return f"تقرير: {self.name} ({self.report_type})"
 
     class Meta:
         verbose_name = _("تقرير")
         verbose_name_plural = _("التقارير")
-        ordering = ["-created_at"]
+        ordering = ["-gereated_at"]
+
+class Subscription(BaseModel):
+    tenant = models.ForeignKey(
+        "Tenant", 
+        on_delete=models.CASCADE,
+        related_name="subscriptions",
+        verbose_name=_("المستأجر")
+    )
+    service_name = models.CharField(
+        max_length=200, 
+        verbose_name=_("اسم الخدمة")
+    )
+    service_type = models.CharField(
+        max_length=200,
+        choices = [
+            ("internet", _("إنترنت")),
+            ("parking", _("مواقف سيارات")),
+            ("utilities", _("فواتير خدمات")),
+            ("other", _("أخرى")),
+        ],
+        default="other",
+        verbose_name=_("نوع الخدمة")
+    )
+    monthly_fee = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2, 
+        verbose_name=_("التكلفة الشهري")
+    )
+    start_date = models.DateField(
+        default=now,
+        verbose_name=_("تاريخ البدء")
+    )
+    end_date = models.DateField(
+        verbose_name=_("تاريخ النهاية")
+    )
+    is_active = models.BooleanField(
+        default=True, 
+        verbose_name=_("نشط")
+    )
+
+    def calculate_remainig_days(self):
+        if self.end_date:
+            return (self.end_date - now().date()).days
+        return None
         
+    def __str__(self):
+        return f"اشتراك {self.service_name} - {self.tenant.full_name}"
+
+    class Meta:
+        verbose_name = _("اشتراك")
+        verbose_name_plural = _("الاشتراكات")
+        ordering = ["-start_date"]
+        
+class LatePaymnet(BaseModel):
+    invoice = models.OneToOneField(
+        "Invoice", 
+        on_delete=models.CASCADE,
+        related_name="late_payments",
+        verbose_name=_("الفاتورة")
+    )
+    days_late = models.PositiveIntegerField(
+        verbose_name=_("عدد الأيام المتأخرة")
+    )
+    penalty = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2, 
+        verbose_name=_("غرامة التأخير")
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True, 
+        verbose_name=_("تاريخ التسجيل")
+    )
+
+    def calculate_penalty(self, daily_penalty_rate=5):
+        self.penalty = self.days_late * daily_penalty_rate
+        self.save()
+        
+    def __str__(self):
+        return f"غرامة: {self.penalty} - {self.days_late} يوم ({self.invoice})"
+
+    class Meta:
+        verbose_name = _("مدفوعات متأخرة")
+        verbose_name_plural = _("مدفوعات متأخرة")
+        ordering = ["-created_at"]
+
 class MaintenanceRequest(BaseModel):
     PRIORITY_CHOICES = [
-        ("Low", _("أقل")),
+        ("Low", _("منخفضة")),
         ("Medium", _("متوسط")),
-        ("High", _("أعلى")),
+        ("High", _("عالية")),
     ]
     unit = models.ForeignKey(
         Unit, 
@@ -577,7 +626,7 @@ class MaintenanceRequest(BaseModel):
         verbose_name_plural = _("طلبات الصيانة")
         ordering = ["-request_date"]
         indexes = [
-            models.Index(fields=["unit", "is_resolved"]),
+            models.Index(fields=["unit", "priority", "is_resolved"]),
         ]
 
 class MaintenanceFeedback(BaseModel):
@@ -603,40 +652,4 @@ class MaintenanceFeedback(BaseModel):
     class Meta:
         verbose_name = _("تقييم الصيانة")
         verbose_name_plural = _("التقييمات الصيانة")
-
-class Subscription(BaseModel):
-    tenant = models.ForeignKey(
-        "Tenant", 
-        on_delete=models.CASCADE,
-        related_name="subscriptions",
-        verbose_name=_("المستأجر")
-    )
-    service_name = models.CharField(
-        max_length=200, 
-        verbose_name=_("اسم الخدمة")
-    )
-    monthly_fee = models.DecimalField(
-        max_digits=10, 
-        decimal_places=2, 
-        verbose_name=_("التكلفة الشهري")
-    )
-    start_date = models.DateField(
-        default=now,
-        verbose_name=_("تاريخ البدء")
-    )
-    end_date = models.DateField(
-        verbose_name=_("تاريخ النهاية")
-    )
-    is_active = models.BooleanField(
-        default=True, 
-        verbose_name=_("نشط")
-    )
-    
-    def __str__(self):
-        return f"اشتراك {self.tenant.full_name} - {self.service_name}"
-
-    class Meta:
-        verbose_name = _("اشتراك")
-        verbose_name_plural = _("الاشتراكات")
-        ordering = ["-start_date"]
-           
+        ordering = ["-created_at"]
