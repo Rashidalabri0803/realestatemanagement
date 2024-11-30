@@ -1,12 +1,13 @@
-        from django.db import models
-        from django.utils.translation import gettext_lazy as _
-        from django.utils.timezone import now
-        from datetime import timedelta
-        from django.contrib.auth.models import User
+from datetime import timedelta
+
+from django.contrib.auth.models import User
+from django.db import models
+from django.utils.timezone import now
+from django.utils.translation import gettext_lazy as _
 
 
         ### نموذج أساسي لدعم الحذف المنطقي ###
-        class BaseModel(models.Model):
+class BaseModel(models.Model):
             is_deleted = models.BooleanField(default=False, verbose_name=_("محذوف"))
             created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("تاريخ الإنشاء"))
             updated_at = models.DateTimeField(auto_now=True, verbose_name=_("تاريخ التحديث"))
@@ -16,7 +17,7 @@
 
 
         ### نموذج المباني ###
-        class Building(BaseModel):
+class Building(BaseModel):
             name = models.CharField(max_length=200, unique=True, verbose_name=_("اسم المبنى"))
             address = models.TextField(verbose_name=_("عنوان المبنى"))
             description = models.TextField(blank=True, null=True, verbose_name=_("وصف"))
@@ -55,7 +56,7 @@
 
 
         ### نموذج الوحدات ###
-        class Unit(BaseModel):
+class Unit(BaseModel):
             UNIT_TYPE_CHOICES = [
                 ('office', _("مكتب")),
                 ('apartment', _("شقة")),
@@ -93,9 +94,24 @@
                 ordering = ['building', 'number']
                 indexes = [models.Index(fields=['status', 'unit_type', 'tags'])]
 
+class MaintenanceHistory(BaseModel):
+            unit = models.ForeignKey(Unit, on_delete=models.CASCADE, related_name="maintenance_history", verbose_name=_("الوحدة"))
+            description = models.TextField(verbose_name=_("وصف الصيانة"))
+            cost = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("التكلفة"))
+            maintenance_date = models.DateField(default=now, verbose_name=_("تاريخ الصيانة"))
+
+            def __str__(self):
+                return f"تاريخ الصيانة - {self.unit.number} - {self.maintenance_date}"
+
+            class Meta:
+                verbose_name = _("تاريخ الصيانة")
+                verbose_name_plural = _("تواريخ الصيانة")
+                ordering = ['-maintenance_date']
+                indexes = [models.Index(fields=['unit', 'maintenance_date'])]
+
 
         ### نموذج المستأجرين ###
-        class Tenant(BaseModel):
+class Tenant(BaseModel):
             full_name = models.CharField(max_length=200, verbose_name=_("الاسم الكامل"))
             phone_number = models.CharField(max_length=20, unique=True, verbose_name=_("رقم الهاتف"))
             email = models.EmailField(blank=True, null=True, verbose_name=_("البريد الإلكتروني"))
@@ -106,6 +122,10 @@
             def active_contracts(self):
                 return self.leasecontract_set.filter(is_active=True, is_deleted=False).count()
 
+            def total_payments(self):
+                return sum(payment.amount for payment in self.payments.all())
+                
+
             def __str__(self):
                 return self.full_name
 
@@ -113,7 +133,8 @@
                 verbose_name = _("مستأجر")
                 verbose_name_plural = _("المستأجرون")
                 ordering = ['full_name']
-                indexes = [models.Index(fields=['phone_number'])]
+                indexes = [models.Index(fields=['phone_number', 'email'])]
+                
 class LeaseContract(BaseModel):
     unit = models.OneToOneField(Unit, on_delete=models.CASCADE, related_name="contract", verbose_name=_("الوحدة"))
     tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE, related_name="contracts", verbose_name=_("المستأجر"))
@@ -210,20 +231,23 @@ class Reminder(BaseModel):
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("تاريخ الإنشاء"))
     is_sent = models.BooleanField(default=False, verbose_name=_("تم الإرسال"))
 
-    def send_reminder(self):
+    def send_notification(self):
         if not self.is_sent:
             # محاكاة إرسال الإشعار
-            print(f"تم إرسال التذكير إلى {self.tenant.full_name}")
+            print(f"تم إرسال التذكير إلى {self.tenant.full_name} : {self.message}")
             self.is_sent = True
             self.save()
 
     def __str__(self):
-        return f"تذكير: {self.tenant.full_name} - {self.message[:20]}"
+        return f"تذكير: {self.tenant.full_name}"
 
     class Meta:
         verbose_name = _("تذكير")
         verbose_name_plural = _("التذكيرات")
         ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['tenant', 'is_sent']),
+        ]
 class Notification(BaseModel):
     message = models.TextField(verbose_name=_("الرسالة"))
     is_read = models.BooleanField(default=False, verbose_name=_("مقروء"))
@@ -304,6 +328,13 @@ class SystemStatistics(BaseModel):
     total_tenants = models.PositiveIntegerField(default=0, verbose_name=_("إجمالي المستأجرين"))
     total_income = models.DecimalField(max_digits=12, decimal_places=2, default=0, verbose_name=_("إجمالي الإيرادات"))
 
+    def update_statistics(self):
+        self.total_buildings = Building.objects.filter(is_deleted=False).count()
+        self.total_units = Unit.objects.filter(is_deleted=False).count()
+        self.total_tenants = Tenant.objects.filter(is_deleted=False).count()
+        self.total_income = sum(invoices.amount for invoices in Invoice.objects.filter(is_paid=True))
+        self.save()
+
     def __str__(self):
         return f"إحصائية النظام - {self.date}"
 
@@ -312,6 +343,7 @@ class SystemStatistics(BaseModel):
         verbose_name_plural = _("إحصائيات النظام")
         ordering = ['-date']
         indexes = [models.Index(fields=['date'])]
+        
 class LatePayment(BaseModel):
     invoice = models.OneToOneField(Invoice, on_delete=models.CASCADE, related_name="late_payment", verbose_name=_("الفاتورة"))
     days_late = models.PositiveIntegerField(verbose_name=_("عدد الأيام المتأخرة"))
@@ -512,3 +544,38 @@ class DailyActivityLog(BaseModel):
         verbose_name_plural = _("سجلات الأنشطة اليومية")
         ordering = ['-date']
         indexes = [models.Index(fields=['date'])]
+class AuditTrail(BaseModel):
+    user = models.ForeignKey(
+        User, 
+        on_delete=models.SET_NULL,
+        null=True,
+        verbose_name=_("المستخدم"))
+    model_name = models.CharField(
+        max_length=200, 
+        verbose_name=_("اسم النموذج"))
+    object_id = models.PositiveIntegerField(
+        verbose_name=_("معرف العنصر"))
+    action = models.CharField(
+        max_length=50,
+        choices=[
+            ('create', _("إنشاء")),
+            ('update', _("تعديل")),
+            ('delete', _("حذف")),
+        ],
+        verbose_name=_("الإجراء"))
+    timestamp = models.DateTimeField(
+        auto_now_add=True, 
+        verbose_name=_("وقت الإجراء"))
+    changes = models.JSONField(
+        blank=True, 
+        null=True, 
+        verbose_name=_("التغييرات")
+    )
+
+    def __str__(self):
+        return f"{self.action} - {self.model_name} - {self.timestamp}"
+
+    class Meta:
+        verbose_name = _("سجل تعديلات")
+        verbose_name_plural = _("سجلات التعديلات")
+        ordering = ['-timestamp']
