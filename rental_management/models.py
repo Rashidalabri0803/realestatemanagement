@@ -1,5 +1,5 @@
 from datetime import timedelta
-
+from django.contrib.auth.models import User
 from django.db import models
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
@@ -819,4 +819,190 @@ class ReminderLog(BaseModel):
     class Meta:
         verbose_name = _("سجل تذكير")
         verbose_name_plural = _("سجلات التذكيرات")
+        ordering = ["-sent_date"]
+
+class ScheduledReminder(BaseModel):
+    tenant = models.ForeignKey(
+        "Tenant", 
+        on_delete=models.CASCADE,
+        related_name="scheduled_reminders",
+        verbose_name=_("المستأجر")
+    )
+    contract = models.ForeignKey(
+        "Contract", 
+        on_delete=models.CASCADE,
+        related_name="scheduled_reminders",
+        verbose_name=_("العقد")
+    )
+    invoice = models.ForeignKey(
+        "Invoice", 
+        on_delete=models.CASCADE,
+        blank=True,
+        null=True,
+        related_name="scheduled_reminders",
+        verbose_name=_("الفاتورة")
+    )
+    scheduled_date = models.DateTimeField(
+        verbose_name=_("تاريخ التذكير المجدول")
+    )
+    is_sent = models.BooleanField(
+        default=False, 
+        verbose_name=_("تم إرساله")
+    )
+
+    def send_reminder(self):
+        if not self.is_sent and self.scheduled_date <= now():
+            print(f"تم إرسال التذكير إلى: {self.tenant.full_name}")
+            self.is_sent = True
+            self.save()
+
+    def __str__(self):
+        return f"تذكير مجدول: {self.tenant.full_name} - {self.scheduled_date}"
+
+    class Meta:
+        verbose_name = _("تذكير مجدول")
+        verbose_name_plural = _("تذكيرات مجدولة")
+        ordering = ["-scheduled_date"]
+        indexes = [
+            models.Index(fields=["tenant", "scheduled_date", "is_sent"]),
+        ]
+
+class UserRole(BaseModel):
+    ROLE_CHOICES = [
+        ("admin", _("مدير")),
+        ("manager", _("مدير عمليات")),
+        ("staff", _("موظف")),
+    ]
+    name = models.CharField(
+        max_length=50, 
+        choices=ROLE_CHOICES,
+        unique=True,
+        verbose_name=_("الدور")
+    )
+    descripton = models.TextField(
+        blank=True,
+        null=True,
+        verbose_name=_("الوصف")
+    )
+
+    def __str__(self):
+        return f"دور: {self.get_name_display()}"
+
+    class Meta:
+        verbose_name = _("دور المستخدم")
+        verbose_name_plural = _("أدوار المستخدمين")
+        ordering = ["-name"]
+
+class UserProfile(BaseModel):
+    user = models.OneToOneField(
+        User, 
+        on_delete=models.CASCADE,
+        related_name="profile",
+        verbose_name=_("المستخدم")
+    )
+    role = models.ForeignKey(
+        UserRole, 
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="users",
+        verbose_name=_("الدور")
+    )
+    phone_number = models.CharField(
+        max_length=20, 
+        blank=True, 
+        null=True,
+        verbose_name=_("رقم الهاتف")
+    )
+    address = models.TextField(
+        blank=True, 
+        null=True,
+        verbose_name=_("العنوان")
+    )
+
+    def __str__(self):
+        return f"ملف المستخدم: {self.user.username}"
+
+    class Meta:
+        verbose_name = _("ملف المستخدم")
+        verbose_name_plural = _("ملفات المستخدمين")
+
+class SystemSettings(BaseModel):
+    key = models.CharField(
+        max_length=200, 
+        unique=True,
+        verbose_name=_("اسم الإعداد")
+    )
+    value = models.TextField(
+        verbose_name=_("القيمة")
+    )
+    description = models.TextField(
+        blank=True, 
+        null=True, 
+        verbose_name=_("الوصف")
+    )
+
+    def __str__(self):
+        return f"إعداد: {self.key}"
+
+    class Meta:
+        verbose_name = _("إعدادات النظام")
+        verbose_name_plural = _("إعدادات النظام")
+
+class SystemStatistics(BaseModel):
+    date = models.DateField(
+        default=now,
+        verbose_name=_("التاريخ")
+    )
+    total_buildings = models.PositiveIntegerField(
+        default=0,
+        verbose_name=_("إجمالي المباني")
+    )
+    total_units = models.PositiveIntegerField(
+        default=0,
+        verbose_name=_("إجمالي الوحدات")
+    )
+    total_tenants = models.PositiveIntegerField(
+        default=0,
+        verbose_name=_("إجمالي المستأجرين")
+    )
+    total_income = models.DecimalField(
+        max_digits=12, 
+        decimal_places=2,
+        default=0,
+        verbose_name=_("إجمالي الإيرادات")
+    )
+
+    def __str__(self):
+        return f"إحصائيات النظام - {self.date}"
+
+    class Meta:
+        verbose_name = _("إحصائيات النظام")
+        verbose_name_plural = _("إحصائيات النظام")
+        ordering = ["-date"]
+        indexes = [
+            models.Index(fields=["date"]),
+        ]
+
+class MessageLog(BaseModel):
+    recipient = models.CharField(
+        max_length=50,
+        choices = [
+            ("sent", _("تم الإرسال")),
+            ("failed", _("فشل"))
+        ],
+        default="sent",
+        verbose_name=_("الحالة")
+    )
+    response_details = models.TextField(
+        blank=True, 
+        null=True, 
+        verbose_name=_("تفاصيل الرد")
+    )
+
+    def __str__(self):
+        return f"سجل الرسائل: {self.recipient} - {self.get_status_display()}"
+
+    class Meta:
+        verbose_name = _("سجل الرسائل")
+        verbose_name_plural = _("سجلات الرسائل")
         ordering = ["-sent_date"]
