@@ -1,158 +1,149 @@
 from django.contrib import admin
-from django.utils.html import format_html
-
-from .models import (
-    AuditLog,
-    Building,
-    Expense,
-    Invoice,
-    LeaseContract,
-    MaintenanceRequest,
-    Reminder,
-    Report,
-    Subscription,
-    Tenant,
-    Unit,
-)
-
+from .models import Building, Unit, Tenant, LeaseContract, Invoice, Payment, Reminder, Notification, AuditLog, Report, Subscription, LatePayment, MaintenanceRequest, MaintenanceFeedback, AnnualRentDetail, SystemEvent, Feedback, DailyPaymentLog, ReminderLog, ScheduledReminder, UserRole, UserProfile, SystemSettings, SystemStatistics, MessageLog
 
 @admin.register(Building)
 class BuildingAdmin(admin.ModelAdmin):
-    list_display = ('name', 'address', 'total_units', 'total_rent', 'yearly_rent', 'image_preview', 'created_at')
+    list_display = ('name', 'address', 'total_units', 'rented_units', 'rented_percentage')
     search_fields = ('name', 'address')
-    list_filter = ('created_at', 'updated_at')
-    readonly_fields = ('created_at', 'updated_at' , 'image_preview')
-
-    def total_units(self, obj):
-        return obj.units.count()
-    total_units.short_description = 'إجمالي الوحدات'
-
-    def total_rent(self, obj):
-        return obj.total_rent()
-    total_rent.short_description = 'الإيجار الشهري'
-
-    def yearly_rent(self, obj):
-        return obj.yearly_rent()
-    yearly_rent.short_description = 'الإيجار السنوي'
-
-    def image_preview(self, obj):
-        if obj.image:
-            return format_html(f'<img src="{obj.image.url}" width="50" height="50" />')
-        return "لا توجد صورة"
-    image_preview.short_description = 'صورة المبني'
+    list_filter = ('name',)
 
 @admin.register(Unit)
 class UnitAdmin(admin.ModelAdmin):
-    list_display = ('number', 'building', 'unit_type', 'status', 'monthly_rent', 'yearly_rent', 'image_preview')
+    list_display = ('number', 'building', 'unit_type', 'status','monthly_rent')
     search_fields = ('number', 'building__name')
-    list_filter = ('status', 'unit_type',  'building')
-    readonly_fields = ('created_at', 'updated_at', 'image_preview')
-
-    def yearly_rent(self, obj):
-        return obj.yearly_rent()
-    yearly_rent.short_description = 'الإيجار السنوي'
-
-    def image_preview(self, obj):
-        if obj.image:
-            return format_html(f'<img src="{obj.image.url}" width="50" height="50" />')
-        return "لا توجد صورة"
-    image_preview.short_description = 'صورة الوحدة'
+    list_filter = ('unit_type', 'status', 'building')
 
 @admin.register(Tenant)
 class TenantAdmin(admin.ModelAdmin):
-    list_display = ('full_name', 'phone_number', 'email', 'active_contracts',   'profile_picture_preview')
+    list_display = ('full_name', 'phone_number', 'email', 'id_card')
     search_fields = ('full_name', 'phone_number', 'email')
-    readonly_fields = ('profile_picture_preview',)
+    list_filter = ('full_name',)
 
-    def active_contracts(self, obj):
-        return obj.active_contracts()
-    active_contracts.short_description = 'العقود النشطة'
-
-    def profile_picture_preview(self, obj):
-        if obj.profile_picture:
-            return format_html(f'<img src="{obj.profile_picture.url}" width="50" height="50" />')
-        return "لا توجد صورة"
-        
 @admin.register(LeaseContract)
 class LeaseContractAdmin(admin.ModelAdmin):
-    list_display = ('unit', 'tenant', 'start_date', 'end_date', 'monthly_rent', 'is_active', 'remaining_days', 'is_due_soon')
-    list_filter = ('is_active', 'start_date', 'end_date')
-    search_fields = ('unit__number', 'tenant__full_name')
-    readonly_fields = ('remaining_days',)
-    actions = ['mark_contracts_terminated']
-    
-    def remaining_days(self, obj):
-        days = obj.remaining_days()
-        if days is not None:
-            return f'{days} يوم' if days > 0 else 'منتهي'
-        return 'غير محدد'
-    remaining_days.short_description = 'الأيام المتبقية'
-
-    def is_due_soon(self, obj):
-        return obj.is_due_soon()
-    is_due_soon.short_description = 'سينتهي قريبا'
-    is_due_soon.boolean = True
-
-    @admin.action(description='تحديد العقود كمنتهية')
-    def mark_contracts_terminated(self, request, queryset):
-        queryset.update(is_active=False)
-        self.messege_user(queryset, f'تم إنهاء {queryset.count()} عقد بنجاح. ')
+    list_display = ('tenant', 'unit', 'start_date', 'end_date', 'monthly_rent', 'is_active')
+    search_fields = ('tenant__full_name', 'unit__number')
+    list_filter = ('is_active',)
 
 @admin.register(Invoice)
 class InvoiceAdmin(admin.ModelAdmin):
-    list_display = ('contract', 'issue_date', 'due_date', 'amount', 'is_paid')
-    list_filter = ('is_paid', 'issue_date', 'due_date')
-    search_fields = ('contract__unit_number',)
+    list_display = ('contract', 'issue_date', 'due_date', 'amount', 'is_paid', 'late_fee')
+    search_fields = ('contract__tenant__full_name', 'contract__unit__number')
+    list_filter = ('is_paid', 'due_date')
 
-    def days_until_dues(self, obj):
-        return obj.days_until_dues()
-    days_until_dues.short_description = 'الأيام المتبقية'
+@admin.register(Payment)
+class PaymentAdmin(admin.ModelAdmin):
+    list_display = ('contract', 'amount', 'payment_date', 'status')
+    search_fields = ('contract__tenant__full_name', 'contract__unit__number')
+    list_filter = ('status', 'payment_date')
 
 @admin.register(Reminder)
 class ReminderAdmin(admin.ModelAdmin):
-    list_display = ('tenant', 'contract', 'message', 'created_at', 'is_sent')
+    list_display = ('tenant', 'contract', 'message', 'is_sent', 'created_at')
+    search_fields = ('tenant__full_name', 'contract__unit__number')
     list_filter = ('is_sent', 'created_at')
-    search_fields = ('tenant__full_name', 'message')
 
-@admin.register(Subscription)
-class SubscriptionAdmin(admin.ModelAdmin):
-    list_display = ('tenant', 'start_date', 'end_date')
-    search_fields = ('name', 'tenant__full_name')
-    list_filter = ('start_date', 'end_date')
-
-@admin.register(MaintenanceRequest)
-class MaintenanceRequestAdmin(admin.ModelAdmin):
-    list_display = ('unit', 'description', 'request_date', 'is_resolved', 'resolved_date')
-    list_filter = ('is_resolved', 'request_date', 'resolved_date')
-    search_fields = ('unit__number', 'description')
-    readonly_fields = ('request_date',)
-    actions = ['mark_as_resolved']
-
-    @admin.action(description='تحديد الطلبات كمعالجة')
-    def mark_as_resolved(self, request, queryset):
-        queryset.update(is_resolved=True)
-        self.messege_user(queryset, f'تم معالجة {queryset.count()} طلب بنجاح. ')
-
-@admin.register(Report)
-class ReportAdmin(admin.ModelAdmin):
-    list_display = ('name', 'description', 'created_at', 'last_generated')
-    actions = ['generate_reports']
-
-    @admin.action(description='توليد التقارير المحددة')
-    def generate_report(self, request, queryset):
-        for report in queryset:
-            report.generate_report()
-        self.messege_user(queryset, 'تم توليد التقارير بنجاح. ')
+@admin.register(Notification)
+class NotificationAdmin(admin.ModelAdmin):
+    list_display = ('message', 'is_read', 'priority', 'related_model', 'created_at')
+    search_fields = ('message',)
+    list_filter = ('is_read', 'priority')
 
 @admin.register(AuditLog)
 class AuditLogAdmin(admin.ModelAdmin):
-    list_display = ('action', 'model_name', 'object_id', 'user', 'timestamp')
-    list_filter = ('model_name', 'timestamp')
+    list_display = ('action', 'model_name', 'user', 'ip_address', 'timestamp')
     search_fields = ('action', 'model_name', 'user')
-    list_filter = ('model_name', 'timestamp',)
-    
-@admin.register(Expense)
-class ExpenseAdmin(admin.ModelAdmin):
-    list_display = ('building', 'description', 'amount', 'date')
-    list_filter = ('building', 'date')
-    search_fields = ('description', 'building__name')
+    list_filter = ('action', 'timestamp')
+
+@admin.register(Report)
+class ReportAdmin(admin.ModelAdmin):
+    list_display = ('name', 'report_type', 'generated_at', 'is_scheduled')
+    search_fields = ('name', 'report_type')
+    list_filter = ('is_scheduled', 'generated_at')
+
+@admin.register(Subscription)
+class SubscriptionAdmin(admin.ModelAdmin):
+    list_display = ('tenant', 'service_name', 'service_type', 'monthly_fee', 'start_date', 'end_date', 'is_active')
+    search_fields = ('tenant__full_name', 'service_name')
+    list_filter = ('service_type', 'is_active')
+
+@admin.register(LatePayment)
+class LatePaymentAdmin(admin.ModelAdmin):
+    list_display = ('invoice', 'days_late', 'penalty', 'created_at')
+    search_fields = ('invoice__contract__tenant__full_name', 'invoice__contract__unit__number')
+    list_filter = ('created_at',)
+
+@admin.register(MaintenanceRequest)
+class MaintenanceRequestAdmin(admin.ModelAdmin):
+    list_display = ('unit', 'description', 'priorty', 'is_resolved', 'request_date')
+    search_fields = ('unit__number', 'description')
+    list_filter = ('priorty', 'is_resolved', 'request_date')
+
+@admin.register(MaintenanceFeedback)
+class MaintenanceFeedbackAdmin(admin.ModelAdmin):
+    list_display = ('maintenance_request', 'rating', 'comments', 'created_at')
+    search_fields = ('maintenance_request__unit__number', 'comments')
+    list_filter = ('rating', 'created_at')
+
+@admin.register(AnnualRentDetail)
+class AnnualRentDetailAdmin(admin.ModelAdmin):
+    list_display = ('unit', 'year', 'total_rent', 'paid_amount', 'outstanding_amount')
+    search_fields = ('unit__number',)
+    list_filter = ('year')
+
+@admin.register(SystemEvent)
+class SystemEventAdmin(admin.ModelAdmin):
+    list_display = ('event_type', 'description', 'timestamp')
+    search_fields = ('description',)
+    list_filter = ( 'event_type', 'timestamp')
+
+@admin.register(Feedback)
+class FeedbackAdmin(admin.ModelAdmin):
+    list_display = ('tenant', 'unit', 'comment', 'rating', 'created_at')
+    search_fields = ('tenant__full_name', 'unit__number', 'comment')
+    list_filter = ('rating', 'created_at')
+
+@admin.register(DailyPaymentLog)
+class DailyPaymentLogAdmin(admin.ModelAdmin):
+    list_display = ('date', 'total_payments', 'total_invoices', 'total_late_payments')
+    search_fields = ('date',)
+    list_filter = ('date',)
+
+@admin.register(ReminderLog)
+class ReminderLogAdmin(admin.ModelAdmin):
+    list_display = ('reminder', 'sent_date', 'status', 'response_message')
+    search_fields = ('reminder__tenant__full_name', 'status')
+    list_filter = ('status', 'sent_date')
+
+@admin.register(ScheduledReminder)
+class ScheduledReminderAdmin(admin.ModelAdmin):
+    list_display = ('tenant', 'contract', 'scheduled_date', 'is_sent')
+    search_fields = ('tenant__full_name', 'contract__unit__number')
+    list_filter = ('is_sent', 'scheduled_date')
+
+@admin.register(UserRole)
+class UserRoleAdmin(admin.ModelAdmin):
+    list_display = ('name', 'description')
+    search_fields = ('name',)
+
+@admin.register(UserProfile)
+class UserProfileAdmin(admin.ModelAdmin):
+    list_display = ('user', 'role', 'phone_number', 'address')
+    search_fields = ('user__username', 'role__name', 'phone_number')
+
+@admin.register(SystemSettings)
+class SystemSettingsAdmin(admin.ModelAdmin):
+    list_display = ('key', 'value', 'description')
+    search_fields = ('key', 'description')
+
+@admin.register(SystemStatistics)
+class SystemStatisticsAdmin(admin.ModelAdmin):
+    list_display = ('date', 'total_buildings', 'total_units', 'total_tenants', 'total_income')
+    search_fields = ('date',)
+    list_filter = ('date',)
+
+@admin.register(MessageLog)
+class MessageLogAdmin(admin.ModelAdmin):
+    list_display = ('recipient', 'message', 'sent_date', 'status', 'response_details')
+    search_fields = ('recipient', 'message', 'status')
+    list_filter = ('status', 'sent_date')
