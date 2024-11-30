@@ -94,6 +94,28 @@ class Unit(BaseModel):
                 ordering = ['building', 'number']
                 indexes = [models.Index(fields=['status', 'unit_type', 'tags'])]
 
+class AnnualRentDetail(BaseModel):
+    unit = models.ForeignKey(Unit, on_delete=models.CASCADE, related_name="annual_rent_details", verbose_name=_("الوحدة"))
+    year = models.PositiveIntegerField(verbose_name=_("السنة"))
+    total_rent = models.DecimalField(max_digits=12, decimal_places=2, verbose_name=_("الإيجار السنوي"))
+    paid_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0, verbose_name=_("المبلغ المدفوع"))
+    outstanding_amount = models.DecimalField(max_digits=12, decimal_places=2, verbose_name=_("المبلغ المستحق"))
+
+    def calculate_outstanding(self):
+        """حساب المبلغ المستحق"""
+        self.outstanding_amount = self.total_rent - self.paid_amount
+        self.save()
+
+    def __str__(self):
+        return f"تفاصيل الإيجار السنوي {self.unit.number} - {self.year}"
+
+    class Meta:
+        verbose_name = _("تفاصيل الإيجار السنوي")
+        verbose_name_plural = _("تفاصيل الإيجارات السنوية")
+        ordering = ['-year', 'unit']
+        indexes = [models.Index(fields=['unit', 'year'])]
+
+
 class MaintenanceHistory(BaseModel):
             unit = models.ForeignKey(Unit, on_delete=models.CASCADE, related_name="maintenance_history", verbose_name=_("الوحدة"))
             description = models.TextField(verbose_name=_("وصف الصيانة"))
@@ -579,3 +601,39 @@ class AuditTrail(BaseModel):
         verbose_name = _("سجل تعديلات")
         verbose_name_plural = _("سجلات التعديلات")
         ordering = ['-timestamp']
+class MaintenanceRequest(BaseModel):
+    PRIORITY_CHOICES = [
+        ('low', _("منخفضة")),
+        ('medium', _("متوسطة")),
+        ('high', _("عالية")),
+    ]
+
+    unit = models.ForeignKey(Unit, on_delete=models.CASCADE, related_name="maintenance_requests", verbose_name=_("الوحدة"))
+    description = models.TextField(verbose_name=_("وصف المشكلة"))
+    request_date = models.DateField(default=now, verbose_name=_("تاريخ الطلب"))
+    priority = models.CharField(max_length=50, choices=PRIORITY_CHOICES, default='medium', verbose_name=_("الأولوية"))
+    is_resolved = models.BooleanField(default=False, verbose_name=_("تمت المعالجة"))
+    resolved_date = models.DateField(blank=True, null=True, verbose_name=_("تاريخ المعالجة"))
+
+    def __str__(self):
+        return f"طلب صيانة: {self.unit.number} - {self.get_priority_display()}"
+
+    class Meta:
+        verbose_name = _("طلب صيانة")
+        verbose_name_plural = _("طلبات الصيانة")
+        ordering = ['-request_date']
+        indexes = [models.Index(fields=['unit', 'priority', 'is_resolved'])]
+        
+class MaintenanceFeedback(models.Model):
+    maintenance_request = models.OneToOneField(MaintenanceRequest, on_delete=models.CASCADE, related_name="feedback", verbose_name=_("طلب الصيانة"))
+    rating = models.PositiveIntegerField(verbose_name=_("التقييم"), help_text=_("من 1 إلى 5"))
+    comments = models.TextField(blank=True, null=True, verbose_name=_("التعليقات"))
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("تاريخ التقييم"))
+
+    def __str__(self):
+        return f"تقييم: {self.rating} - {self.maintenance_request}"
+
+    class Meta:
+        verbose_name = _("تقييم الصيانة")
+        verbose_name_plural = _("تقييمات الصيانة")
+        ordering = ['-created_at']
