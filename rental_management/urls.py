@@ -4,24 +4,13 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     BuildingCreatView,
     BuildingListView,
-    BuildingViewSet,
-    InvoiceViewSet,
     LeaseContractCreatView,
-    LeaseContractViewSet,
-    ReminderViewSet,
-    TenantViewSet,
     UnitCreateView,
     UnitListView,
-    UnitViewSet,
 )
 
 router = DefaultRouter()
-router.register(r'buildings', BuildingViewSet)
-router.register(r'units', UnitViewSet)
-router.register(r'tenants', TenantViewSet)
-router.register(r'lease-contracts', LeaseContractViewSet)
-router.register(r'invoices', InvoiceViewSet)
-router.register(r'reminders', ReminderViewSet)
+
 
 urlpatterns = [
     path('buildings/', BuildingListView.as_view(), name='building-list'),
