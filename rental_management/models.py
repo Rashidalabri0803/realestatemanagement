@@ -92,7 +92,7 @@ class Unit(AbstractBaseModel):
     UNIT_STATUS_CHOICES = (
         ('available', _('متاحة')),
         ('rented', _('مؤجرة')),
-        ('maintenance', _('تحت الصيانة'))
+        ('maintenance', _('تحت الصيانة')),
         ('reserved', _('محجوزة')),
     )
     building = models.ForeignKey(
