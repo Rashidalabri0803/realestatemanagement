@@ -1,14 +1,19 @@
-from django.shortcuts import render, get_object_or_404, redirect
-from django.urls import reverse
 from django.contrib import messages
-from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
+from django.views.generic import CreateView, ListView
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import viewsets, filters, status
-from rest_framework.response import Response
+from rest_framework import filters, viewsets
 
-from .models import Building, Unit, Tenant, LeaseContract, Invoice, Reminder, Notification, Report, SystemSettings
-from .forms import UnitForm, TenantForm, LeaseContractForm, InvoiceForm, ReminderForm, SystemSettingsForm
-from .serializers import BuildingSerializer, UnitSerializer, TenantSerializer, LeaseContractSerializer, InvoiceSerializer, ReminderSerializer, SystemSettingsSerializer
+from .forms import LeaseContractForm, UnitForm
+from .models import Building, Invoice, LeaseContract, Reminder, Tenant, Unit
+from .serializers import (
+    BuildingSerializer,
+    InvoiceSerializer,
+    LeaseContractSerializer,
+    ReminderSerializer,
+    TenantSerializer,
+    UnitSerializer,
+)
+
 
 class BuildingListView(ListView):
     model = Building
