@@ -1,182 +1,72 @@
 from django import forms
-
-from .models import (
-    Building,
-    Expense,
-    LeaseContract,
-    MaintenanceRequest,
-    Unit,
-)
-
-
-class BuildingForm(forms.ModelForm):
-    class Meta:
-        model = Building
-        fields = ['name', 'address', 'description', 'image']
-        widgets = {
-            'name': forms.TextInput(attrs={
-                'class': 'form-control', 
-                'placholder': 'اسم المبنى'
-            }),
-            'address': forms.Textarea(attrs={
-                'class': 'form-control',
-                'rows': 3, 
-                'placholder': 'عنوان المبنى'
-            }),
-            'description': forms.Textarea(attrs={
-                'class': 'form-control',
-                'rows': 3, 
-                'placholder': 'وصف المبنى (اختياري)'
-            }),
-            'image': forms.FileInput(attrs={
-                'class': 'form-control-file'
-            }),
-        }
-
-    def clean_name(self):
-        name = self.cleaned_data.get('name')
-        if Building.objects.filter(name=name).exists():
-            raise forms.ValidationError('اسم المبنى موجود بالفعل يرجي اختيار اسم اخر.')
-        return name
+from .models import Unit, LeaseContract, MaintenanceRequest, Reminder
 
 class UnitForm(forms.ModelForm):
     class Meta:
         model = Unit
-        fields = ['building', 'unit_type', 'status', 'number', 'area', 'monthly_rent', 'image']
+        fields = ['building', 'unit_type', 'status', 'number', 'area', 'monthly_rent']
         widgets = {
-            'building': forms.Select(attrs={
-                'class': 'form-control'
-            }),
-            'unit_type': forms.Select(attrs={
-                'class': 'form-control'
-            }),
-            'status': forms.Select(attrs={
-                'class': 'form-control'
-            }),
-            'number': forms.TextInput(attrs={
-                'class': 'form-control', 
-                'placholder': 'رقم الوحدة'
-            }),
-            'area': forms.NumberInput(attrs={
-                'class': 'form-control', 
-                'placholder': 'المساحة'
-            }),
-            'monthly_rent': forms.NumberInput(attrs={
-                'class': 'form-control', 
-                'placholder': 'الإجمالي الشهري'
-            }),
-            'image': forms.ClearableFileInput(attrs={
-                'class': 'form-control'
-            }),
+            'building': forms.Select(attrs={'class': 'form-control'}),
+            'unit_type': forms.Select(attrs={'class': 'form-control'}),
+            'status': forms.Select(attrs={'class': 'form-control'}),
+            'number': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'رقم الوحدة'}),
+            'area': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'المساحة'}),
+            'monthly_rent': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'الإيجار الشهري'}),
         }
 
-    def clean_area(self):
-        area = self.cleaned_data.get('area')
-        if area < 10:
-            raise forms.ValidationError('مساحة الوحدة يجب أن تكون أكبر من 10 متر مربع.')
-        return area
-
     def clean_monthly_rent(self):
-        rent = self.cleaned_data.get('monthly_rent')
-        if rent < 0:
-            raise forms.ValidationError('الإيجار الشهري يجب أن يكون أكبر من صفر.')
-        return rent
-
+        monthly_rent = self.cleaned_data.get('monthly_rent')
+        if monthly_rent <= 0:
+            raise forms.ValidationError("الإيجار الشهري يجب أن يكون أكبر من الصفر")
+        return monthly_rent
 
 class LeaseContractForm(forms.ModelForm):
     class Meta:
         model = LeaseContract
-        fields = ['unit', 'tenant', 'start_date', 'end_date', 'monthly_rent', 'is_active']
+        fields = ['tenant', 'unit', 'start_date', 'end_date', 'monthly_rent', 'is_active']
         widgets = {
-            'unit': forms.Select(attrs={
-                'class': 'form-control'
-            }),
-            'tenant': forms.Select(attrs={
-                'class': 'form-control'
-            }),
-            'start_date': forms.DateInput(attrs={
-                'class': 
-                'form-control', 
-                'type': 'date'
-            }),
-            'end_date': forms.DateInput(attrs={
-                'class': 'form-control', 
-                'type': 'date'
-            }),
-            'monthly_rent': forms.NumberInput(attrs={
-                'class': 'form-control', 
-                'placholder': 'الإيجار الشهري'
-            }),
-            'is_active': forms.CheckboxInput(attrs={
-                'class': 'form-check-input'
-            }),
+            'tenant': forms.Select(attrs={'class': 'form-control'}),
+            'unit': forms.Select(attrs={'class': 'form-control'}),
+            'start_date': forms.DateInput(attrs={'class': 'form-control', 'placeholder': 'تاريخ البدء'}),
+            'end_date': forms.DateInput(attrs={'class': 'form-control', 'placeholder': 'تاريخ الانتهاء'})
         }
 
-    def clean_end_date(self):
-        start_date = self.cleaned_data.get('start_date')
-        end_date = self.cleaned_data.get('end_date')
-        if end_date <= start_date:
-            raise forms.ValidationError('تاريخ نهاية العقد يجب أن يكون أكبر من تاريخ البدء.')
-        return end_date
-
+    def clean(self):
+        cleaned_data = super().clean()
+        start_date = cleaned_data.get('start_date')
+        end_date = cleaned_data.get('end_date')
+        if start_date and end_date and start_date > end_date:
+            raise forms.ValidationError("تاريخ البدء يجب أن يكون قبل تاريخ الانتهاء")
+        return cleaned_data
 
 class MaintenanceRequestForm(forms.ModelForm):
     class Meta:
         model = MaintenanceRequest
-        fields = ['unit', 'description', 'request_date', 'is_resolved', 'resolved_date']
+        fields = ['unit', 'description', 'priority']
         widgets = {
-            'unit': forms.Select(attrs={
-                'class': 'form-control'
-            }),
-            'description': forms.Textarea(attrs={
-                'class': 'form-control', 
-                'rows': 3, 
-                'placholder': 'وصف المشكلة'
-            }),
-            'request_date': forms.DateInput(attrs={
-                'class': 'form-control', 
-                'type': 'date'
-            }),
-            'is_resolved': forms.CheckboxInput(attrs={
-                'class': 'form-check-input'
-            }),
-            'resolved_date': forms.DateInput(attrs={
-                'class': 'form-control', 
-                'type': 'date'
-            }),
+            'unit': forms.Select(attrs={'class': 'form-control'}),
+            'description': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'وصف المشكلة'}),
+            'priority': forms.Select(attrs={'class': 'form-control'}),
         }
-    def clean_resolved_date(self):
-        request_date = self.cleaned_data.get('request_date')
-        resolved_date = self.cleaned_data.get('resolved_date')
-        if resolved_date and request_date < resolved_date:
-            raise forms.ValidationError('تاريخ المعالجة يجب أن يكون أكبر من تاريخ الطلب.')
-        return resolved_date
 
-class ExpenseForm(forms.ModelForm):
+    def clean_description(self):
+        description = self.cleaned_data.get('description')
+        if len(description) > 100:
+            raise forms.ValidationError("الوصف يجب أن يكون أكثر تفصيلاً")
+        return description
+
+class ReminderForm(forms.ModelForm):
     class Meta:
-        model = Expense
-        fields = ['building', 'description', 'amount', 'date']
+        model = Reminder
+        fields = ['tenant', 'contract', 'message']
         widgets = {
-            'building': forms.Select(attrs={
-                'class': 'form-control'
-            }),
-            'description': forms.Textarea(attrs={
-                'class': 'form-control', 
-                'rows': 3, 
-                'placholder': 'وصف المصروف'
-            }),
-            'amount': forms.NumberInput(attrs={
-                'class': 'form-control', 
-                'placholder': 'المبلغ'
-            }),
-            'date': forms.DateInput(attrs={
-                'class': 'form-control', 
-                'type': 'date'
-            }),
+            'tenant': forms.Select(attrs={'class': 'form-control'}),
+            'contract': forms.Select(attrs={'class': 'form-control'}),
+            'message': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'رسالة التنبيه'})
         }
-    def clean_amount(self):
-        amount = self.cleaned_data.get('amount')
-        if amount <= 0:
-            raise forms.ValidationError('المبلغ يجب أن يكون أكبر من صفر.')
-        return amount
 
+    def clean_message(self):
+        message = self.cleaned_data.get('message')
+        if len(message) < 5:
+            raise forms.ValidationError("رسالة التذكير يجب أن تكون أكثر تفصيلا")
+        return message

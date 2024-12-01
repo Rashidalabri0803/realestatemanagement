@@ -1,244 +1,99 @@
-from django.shortcuts import get_object_or_404
-from django.urls import reverse_lazy
-from django.utils.timezone import now
-from django.views.generic import (
-    CreateView,
-    DeleteView,
-    DetailView,
-    ListView,
-    UpdateView,
-)
+from django.shortcuts import render, get_object_or_404, redirect
+from django.urls import reverse
+from django.contrib import messages
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import status, viewsets
-from rest_framework.decorators import action
-from rest_framework.filters import OrderingFilter, SearchFilter
+from rest_framework import viewsets, filters, status
 from rest_framework.response import Response
 
-from .forms import (
-    BuildingForm,
-    ExpenseForm,
-    LeaseContractForm,
-    MaintenanceRequestForm,
-    UnitForm,
-)
-from .models import (
-    Building,
-    Expense,
-    LeaseContract,
-    MaintenanceRequest,
-    Unit,
-)
-from .serializers import (
-    BuildingSerializer,
-    ExpenseSerializer,
-    LeaseContractSerializer,
-    MaintenanceRequestSerializer,
-    UnitSerializer,
-)
+from .models import Building, Unit, Tenant, LeaseContract, Invoice, Reminder, Notification, Report, SystemSettings
+from .forms import UnitForm, TenantForm, LeaseContractForm, InvoiceForm, ReminderForm, SystemSettingsForm
+from .serializers import BuildingSerializer, UnitSerializer, TenantSerializer, LeaseContractSerializer, InvoiceSerializer, ReminderSerializer, SystemSettingsSerializer
 
-
-class BuildingViewSet(viewsets.ModelViewSet):
-    queryset = Building.objects.prefetch_related('total_units').all()
-    serializer_class = BuildingSerializer
-    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_fields = ['name', 'address']
-    search_fields = ['name', 'address']
-    ordering_fields = ['created_at', 'updated_at']
-
-    @action(detail=True, methods=['get'])
-    def units(self, request, pk=None):
-        building = get_object_or_404(Building, pk=pk)
-        units = building.total_units.all()
-        serializer = UnitSerializer(units, many=True, context={'request': request})
-        return Response(serializer.data)
-
-    @action(detail=False, methods=['get'])
-    def statistics(self, request):
-        total_buildings = Building.objects.count()
-        total_units = Unit.objects.count()
-        rented_units = Unit.objects.filter(status='rented').count()
-        available_units = Unit.objects.filter(status='available').count()
-        return Response({
-            'total_buildings': total_buildings,
-            'total_units': total_units,
-            'rented_units': rented_units,
-            'available_units': available_units,
-        })
-
-class UnitViewSet(viewsets.ModelViewSet):
-    queryset = Unit.objects.select_related('building').all()
-    serializer_class = UnitSerializer
-    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_fields = ['building', 'unit_type', 'status']
-    search_fields = ['number', 'building__name']
-    ordering_fields = ['monthly_rent', 'area' , 'created_at']
-
-    @action(detail=False, methods=['get'])
-    def available_units(self, request):
-        available_units = Unit.objects.filter(status='available')
-        serializer = self.get_serializer(available_units, many=True, context={'request': request})
-        return Response(serializer.data)
-
-class LeaseContractViewSet(viewsets.ModelViewSet):
-    queryset = LeaseContract.objects.select_related('unit', 'tenant').all()
-    serializer_class = LeaseContractSerializer
-    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_fields = ['unit', 'tenant', 'is_active']
-    search_fields = ['unit__number', 'tenant__full_name']
-    ordering_fields = ['start_date', 'end_date']
-
-    @action(detail=False, methods=['get'])
-    def expired_contracts(self, request):
-        expired_contracts = LeaseContract.objects.filter(end_date__lt=now(), is_active=True)
-        serializer = self.get_serializer(expired_contracts, many=True, context={'request': request})
-        return Response(serializer.data)
-
-    @action(detail=False, methods=['post'])
-    def terminate_contract(self, request):
-        contract_id = request.data.get('contract_id')
-        contract = get_object_or_404(LeaseContract, pk=contract_id)
-        contract.is_active = False
-        contract.save()
-        return Response({'message': f'تم إنهاء عقد الإيجار {contract_id} بنجاح.'}, status=status.HTTP_200_OK)
-
-class MaintenanceRequestViewSet(viewsets.ModelViewSet):
-    queryset = MaintenanceRequest.objects.select_related('unit').all()
-    serializer_class = MaintenanceRequestSerializer
-    filter_backends = [DjangoFilterBackend, OrderingFilter]
-    filterset_fields = ['unit', 'is_resolved']
-    ordering_fields = ['request_date', 'resolved_date']
-
-    @action(detail=False, methods=['get'])
-    def unresolved(self, request):
-        unresolved_requests = MaintenanceRequest.objects.filter(is_resolved=False)
-        serializer = self.get_serializer(unresolved_requests, many=True, context={'request': request})
-        return Response(serializer.data)
-
-    @action(detail=False, methods=['post'])
-    def bulk_resolve(self, request):
-        request_ids = request.data.get('request_ids', [])
-        MaintenanceRequest.objects.filter(id__in=request_ids).update(is_resolved=True)
-        return Response({'message': f'تم معالجة {len(request_ids)} طلب صيانة'}, status=status.HTTP_200_OK)
-
-class ExpenseViewSet(viewsets.ModelViewSet):
-    queryset = Expense.objects.select_related('building').all()
-    serializer_class = ExpenseSerializer
-    filter_backends = [DjangoFilterBackend, OrderingFilter]
-    filterset_fields = ['building', 'date']
-    ordering_fields = ['amount', 'date']
-        
 class BuildingListView(ListView):
     model = Building
-    template_name = 'buildings/list.html'
+    template_name = 'buildings/building_list.html'
     context_object_name = 'buildings'
+    
+    def get_queryset(self):
+        return Building.objects.filter(is_deleted=False).order_by("name")
 
-class BuildingDetailView(DetailView):
+class BuildingCreatView(CreateView):
     model = Building
-    template_name = 'buildings/detail.html'
-    context_object_name = 'building'
+    fields = ['name', 'address', 'description', 'image']
+    template_name = 'buildings/building_form.html'
 
-class BuildingCreateView(CreateView):
-    model = Building
-    template_name = 'buildings/form.html'
-    form_class = BuildingForm
-    success_url = reverse_lazy('list')
-
-class BuildingUpdateView(UpdateView):
-    model = Building
-    template_name = 'buildings/form.html'
-    form_class = BuildingForm
-    success_url = reverse_lazy('list')
-
-class BuildingDeleteView(DeleteView):
-    model = Building
-    template_name = 'rental_management/building_confirm_delete.html'
-    success_url = reverse_lazy('list')
+    def form_valid(self, form):
+        form.instance.created_by = self.request.user
+        messages.success(self.request, "تم إضافة المبنى بنجاح")
+        return super().form_valid(form)
 
 class UnitListView(ListView):
     model = Unit
-    template_name = 'units/list.html'
+    template_name = 'units/unit_list.html'
     context_object_name = 'units'
+
+    def get_queryset(self):
+        return Unit.objects.filter(is_deleted=False).select_related('building')
 
 class UnitCreateView(CreateView):
     model = Unit
-    template_name = 'units/form.html'
     form_class = UnitForm
-    success_url = reverse_lazy('list')
+    template_name = 'units/unit_form.html'
 
-class UnitUpdateView(UpdateView):
-    model = Unit
-    template_name = 'units/form.html'
-    form_class = UnitForm
-    success_url = reverse_lazy('list')
+    def form_valid(self, form):
+        form.instance.created_by = self.request.user
+        messages.success(self.request, "تم إضافة الوحدة بنجاح")
+        return super().form_valid(form)
 
-class UnitDeleteView(DeleteView):
-    model = Unit
-    template_name = 'rental_management/unit_confirm_delete.html'
-    success_url = reverse_lazy('list')
-
-
-class LeaseContractListView(ListView):
+class LeaseContractCreatView(CreateView):
     model = LeaseContract
-    template_name = 'lease_contracts/list.html'
-    context_object_name = 'contracts'
-
-class LeaseContractCreateView(CreateView):
-    model = LeaseContract
-    template_name = 'lease_contracts/form.html'
     form_class = LeaseContractForm
-    success_url = reverse_lazy('list')
+    template_name = 'contracts/contract_form.html'
 
-class LeaseContractUpdateView(UpdateView):
-    model = LeaseContract
-    template_name = 'lease_contracts/form.html'
-    form_class = LeaseContractForm
-    success_url = reverse_lazy('list')
+    def form_valid(self, form):
+        form.instance.created_by = self.request.user
+        messages.success(self.request, "تم إضافة العقد بنجاح")
+        return super().form_valid(form)
 
-class LeaseContractDeleteView(DeleteView):
-    model = LeaseContract
-    template_name = 'rental_management/lease_contract_confirm_delete.html'
-    success_url = reverse_lazy('list')
+class BuildingViewSet(viewsets.ModelViewSet):
+    queryset = Building.objects.filter(is_deleted=False).prefetch_related('units')
+    serializer_class = BuildingSerializer
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    search_fields = ['name', 'address']
+    filterset_fields = ['crearted_at']
 
-class MaitenanceRequestListView(ListView):
-    model = MaintenanceRequest
-    template_name = 'maintenance_requests/list.html'
-    context_object_name = 'maintenance_requests'
+class UnitViewSet(viewsets.ModelViewSet):
+    queryset = Unit.objects.filter(is_deleted=False).select_related('building')
+    serializer_class = UnitSerializer
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    search_fields = ['building__name', 'number']
+    filterset_fields = ['unit_type', 'status']
 
-class MaitenanceRequestCreateView(CreateView):
-    model = MaintenanceRequest
-    template_name = 'maintenance_requests/form.html'
-    form_class = MaintenanceRequestForm
-    success_url = reverse_lazy('list')
+class TenantViewSet(viewsets.ModelViewSet):
+    queryset = Tenant.objects.filter(is_deleted=False)
+    serializer_class = TenantSerializer
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    search_fields = ['full_name', 'phone_number']
+    filterset_fields = ['created_at']
 
-class MaitenanceRequestUpdateView(UpdateView):
-    model = MaintenanceRequest
-    template_name = 'rental_management/form.html'
-    form_class = MaintenanceRequestForm
-    success_url = reverse_lazy('list')
+class LeaseContractViewSet(viewsets.ModelViewSet):
+    queryset = LeaseContract.objects.filter(is_deleted=False).select_related('tenant', 'unit')
+    serializer_class = LeaseContractSerializer
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    search_fields = ['tenant__full_name', 'unit__number']
+    filterset_fields = ['start_date', 'end_date', 'is_active']
 
-class MaitenanceRequestDeleteView(DeleteView):
-    model = MaintenanceRequest
-    template_name = 'rental_management/maintenance_request_confirm_delete.html'
-    success_url = reverse_lazy('list')
+class InvoiceViewSet(viewsets.ModelViewSet):
+    queryset = Invoice.objects.filter(is_deleted=False).select_related('contract', 'contract__unit', 'contract__tenant')
+    serializer_class = InvoiceSerializer
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    search_fields = ['contract__tenant__full_name', 'contract__unit__number']
+    filterset_fields = ['is_paid', 'due_date']
 
-class ExpenseListView(ListView):
-    model = Expense
-    template_name = 'rental_management/expense_list.html'
-    context_object_name = 'expenses'
-
-class ExpenseCreateView(CreateView):
-    model = Expense
-    template_name = 'rental_management/expense_form.html'
-    form_class = ExpenseForm
-    success_url = reverse_lazy('expense_list')
-
-class ExpenseUpdateView(UpdateView):
-    model = Expense
-    template_name = 'rental_management/expense_form.html'
-    form_class = ExpenseForm
-    success_url = reverse_lazy('expense_list')
-
-class ExpenseDeleteView(DeleteView):
-    model = Expense
-    template_name = 'rental_management/expense_confirm_delete.html'
-    success_url = reverse_lazy('expense_list')
+class ReminderViewSet(viewsets.ModelViewSet):
+    queryset = Reminder.objects.filter(is_deleted=False).select_related('tenant', 'contract')
+    serializer_class = ReminderSerializer
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    search_fields = ['tenant__full_name', 'message']
+    filterset_fields = ['is_sent']

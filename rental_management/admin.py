@@ -1,170 +1,108 @@
 from django.contrib import admin
 
 from .models import (
-    AnnualRentDetail,
-    AuditLog,
     Building,
-    DailyPaymentLog,
-    Feedback,
     Invoice,
+    LatePayment,
     LeaseContract,
     MaintenanceFeedback,
     MaintenanceRequest,
-    MessageLog,
     Notification,
-    Payment,
     Reminder,
-    ReminderLog,
     Report,
-    ScheduledReminder,
-    Subscription,
-    SystemEvent,
     SystemSettings,
-    SystemStatistics,
     Tenant,
     Unit,
-    UserProfile,
-    UserRole,
 )
 
 
 @admin.register(Building)
 class BuildingAdmin(admin.ModelAdmin):
-    list_display = ('name', 'address', 'total_units', 'rented_units', 'rented_percentage')
+    list_display = ('name', 'address', 'total_units', 'rented_units', 'rented_percentage', 'monthly_income')
     search_fields = ('name', 'address')
-    list_filter = ('name',)
+    list_filter = ('created_at', 'updated_at')
+    actions = ['export_to_csv']
 
+    @admin.action(description='تصدير المباني إلى ملف CSV')
+    def export_to_csv(self, request, queryset):
+        import csv
+
+        from django.http import HttpResponse
+
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="buildings.csv"'
+
+        writer = csv.writer(response)
+        writer.writerow(['ID', 'Name', 'Address', 'Total Units', 'Rented Units', 'Monthly Income'])
+
+        for building in queryset:
+            writer.writerow([
+              building.id, building.name, building.address,
+              building.total_units(), building.rented_units(), building.monthly_income()])
+        return response
+      
 @admin.register(Unit)
 class UnitAdmin(admin.ModelAdmin):
-    list_display = ('number', 'building', 'unit_type', 'status','monthly_rent')
-    search_fields = ('number', 'building__name')
-    list_filter = ('unit_type', 'status', 'building',)
-
+    list_display = ('building', 'number', 'unit_type', 'status', 'monthly_rent', 'is_available')
+    search_fields = ('building__name', 'number')
+    list_filter = ('building', 'unit_type', 'status')
+  
 @admin.register(Tenant)
 class TenantAdmin(admin.ModelAdmin):
-    list_display = ('full_name', 'phone_number', 'email', 'id_card')
+    list_display = ('full_name', 'phone_number', 'email', 'id_card', 'active_contracts_count', 'total_payments')
     search_fields = ('full_name', 'phone_number', 'email')
-    list_filter = ('full_name',)
-
+    list_filter = ('created_at',)
+  
 @admin.register(LeaseContract)
 class LeaseContractAdmin(admin.ModelAdmin):
-    list_display = ('tenant', 'unit', 'start_date', 'end_date', 'monthly_rent', 'is_active')
+    list_display = ('tenant', 'unit', 'start_date', 'end_date', 'monthly_rent', 'is_active', 'remaining_days')
     search_fields = ('tenant__full_name', 'unit__number')
-    list_filter = ('is_active',)
-
+    list_filter = ('start_date', 'end_date', 'is_active')
+  
 @admin.register(Invoice)
 class InvoiceAdmin(admin.ModelAdmin):
-    list_display = ('contract', 'issue_date', 'due_date', 'amount', 'late_fee')
+    list_display = ('contract', 'issue_date', 'due_date', 'amount', 'is_paid', 'late_fee', 'is_overdue')
     search_fields = ('contract__tenant__full_name', 'contract__unit__number')
-    list_filter = ('due_date',)
-
-@admin.register(Payment)
-class PaymentAdmin(admin.ModelAdmin):
-    list_display = ('conract', 'amount', 'payment_date', 'status')
-    search_fields = ('conract__tenant__full_name', 'conract__unit__number')
-    list_filter = ('status', 'payment_date',)
-
+    list_filter = ('due_date', 'is_paid')
+  
 @admin.register(Reminder)
 class ReminderAdmin(admin.ModelAdmin):
     list_display = ('tenant', 'contract', 'message', 'is_sent', 'created_at')
     search_fields = ('tenant__full_name', 'contract__unit__number')
-    list_filter = ('is_sent', 'created_at',)
-
+    list_filter = ('created_at', 'is_sent')
+  
 @admin.register(Notification)
 class NotificationAdmin(admin.ModelAdmin):
-    list_display = ('message', 'is_read', 'priority', 'related_model', 'created_at')
-    search_fields = ('message',)
-    list_filter = ('is_read', 'priority',)
-
-@admin.register(AuditLog)
-class AuditLogAdmin(admin.ModelAdmin):
-    list_display = ('action', 'model_name', 'user', 'ip_address', 'timestamp')
-    search_fields = ('action', 'model_name', 'user')
-    list_filter = ('action', 'timestamp',)
-
-@admin.register(Report)
-class ReportAdmin(admin.ModelAdmin):
-    list_display = ('name', 'report_type', 'generated_at', 'is_scheduled')
-    search_fields = ('name', 'report_type')
-    list_filter = ('is_scheduled', 'generated_at',)
-
-@admin.register(Subscription)
-class SubscriptionAdmin(admin.ModelAdmin):
-    list_display = ('tenant', 'service_name', 'service_type', 'monthly_fee', 'start_date', 'end_date', 'is_active')
-    search_fields = ('tenant__full_name', 'service_name')
-    list_filter = ('service_type', 'is_active',)
-
-
+    list_display = ('tenant', 'message', 'priority', 'is_read', 'created_at')
+    search_fields = ('message')
+    list_filter = ('priority', 'is_read')
+  
 @admin.register(MaintenanceRequest)
 class MaintenanceRequestAdmin(admin.ModelAdmin):
+  
     list_display = ('unit', 'description', 'priority', 'is_resolved', 'request_date')
-    search_fields = ('unit__number', 'description')
-    list_filter = ('priority', 'is_resolved', 'request_date',)
-
+    search_fields = ('unit__number', 'description',)
+    list_filter = ('priority', 'is_resolved', 'request_date')
+  
 @admin.register(MaintenanceFeedback)
 class MaintenanceFeedbackAdmin(admin.ModelAdmin):
     list_display = ('maintenance_request', 'rating', 'comments', 'created_at')
     search_fields = ('maintenance_request__unit__number', 'comments')
-    list_filter = ('rating', 'created_at',)
-
-@admin.register(AnnualRentDetail)
-class AnnualRentDetailAdmin(admin.ModelAdmin):
-    list_display = ('unit', 'year', 'total_rent', 'paid_amount', 'outstanding_amount')
-    search_fields = ('unit__number',)
-    list_filter = ('year',)
-
-@admin.register(SystemEvent)
-class SystemEventAdmin(admin.ModelAdmin):
-    list_display = ('event_type', 'description', 'timestamp')
-    search_fields = ('description',)
-    list_filter = ( 'event_type', 'timestamp',)
-
-@admin.register(Feedback)
-class FeedbackAdmin(admin.ModelAdmin):
-    list_display = ('tenant', 'unit', 'comment', 'rating', 'created_at')
-    search_fields = ('tenant__full_name', 'unit__number', 'comment')
-    list_filter = ('rating', 'created_at',)
-
-@admin.register(DailyPaymentLog)
-class DailyPaymentLogAdmin(admin.ModelAdmin):
-    list_display = ('date', 'total_payments', 'total_invoices', 'total_late_payments')
-    search_fields = ('date',)
-    list_filter = ('date',)
-
-@admin.register(ReminderLog)
-class ReminderLogAdmin(admin.ModelAdmin):
-    list_display = ('reminder', 'sent_date', 'status', 'response_message')
-    search_fields = ('reminder__tenant__full_name', 'status')
-    list_filter = ('status', 'sent_date',)
-
-@admin.register(ScheduledReminder)
-class ScheduledReminderAdmin(admin.ModelAdmin):
-    list_display = ('tenant', 'scheduled_date', 'is_sent')
-    search_fields = ('tenant__full_name', 'contract__unit__number')
-    list_filter = ('is_sent', 'scheduled_date',)
-
-@admin.register(UserRole)
-class UserRoleAdmin(admin.ModelAdmin):
-    list_display = ('name', 'descripton')
-    search_fields = ('name',)
-
-@admin.register(UserProfile)
-class UserProfileAdmin(admin.ModelAdmin):
-    list_display = ('user', 'role', 'phone_number', 'address')
-    search_fields = ('user__username', 'role__name', 'phone_number')
-
+    list_filter = ('created_at', 'rating')
+@admin.register(LatePayment)
+class LatePaymentAdmin(admin.ModelAdmin):
+    list_display = ('invoice', 'days_late', 'penalty', 'created_at')
+    search_fields = ('invoice__contract__tenant__full_name', 'invoice__contract__unit__number')
+    list_filter = ('created_at',)
+  
+@admin.register(Report)
+class ReportAdmin(admin.ModelAdmin):
+    list_display = ('name', 'report_type', 'generated_at')
+    search_fields = ('name', 'report_type')
+    list_filter = ('generated_at',)
+  
 @admin.register(SystemSettings)
 class SystemSettingsAdmin(admin.ModelAdmin):
     list_display = ('key', 'value', 'description')
-    search_fields = ('key', 'description')
-
-@admin.register(SystemStatistics)
-class SystemStatisticsAdmin(admin.ModelAdmin):
-    list_display = ('date', 'total_buildings', 'total_units', 'total_tenants', 'total_income')
-    search_fields = ('date',)
-    list_filter = ('date',)
-
-@admin.register(MessageLog)
-class MessageLogAdmin(admin.ModelAdmin):
-    list_display = ('recipient', 'response_details')
-    search_fields = ('recipient', 'message', 'status')
+    search_fields = ('key', 'value', 'description')
+    list_filter = ('created_at',)
