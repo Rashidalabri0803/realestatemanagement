@@ -1,18 +1,8 @@
 from django.contrib import messages
 from django.views.generic import CreateView, ListView
-from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters, viewsets
 
 from .forms import LeaseContractForm, UnitForm
-from .models import Building, Invoice, LeaseContract, Reminder, Tenant, Unit
-from .serializers import (
-    BuildingSerializer,
-    InvoiceSerializer,
-    LeaseContractSerializer,
-    ReminderSerializer,
-    TenantSerializer,
-    UnitSerializer,
-)
+from .models import Building, LeaseContract, Unit
 
 
 class BuildingListView(ListView):

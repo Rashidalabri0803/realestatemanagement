@@ -73,8 +73,8 @@ class ReminderAdmin(admin.ModelAdmin):
   
 @admin.register(Notification)
 class NotificationAdmin(admin.ModelAdmin):
-    list_display = ('tenant', 'message', 'priority', 'is_read', 'created_at')
-    search_fields = ('message')
+    list_display = ('message', 'priority', 'is_read', 'created_at')
+    search_fields = ('message',)
     list_filter = ('priority', 'is_read')
   
 @admin.register(MaintenanceRequest)
@@ -86,8 +86,8 @@ class MaintenanceRequestAdmin(admin.ModelAdmin):
   
 @admin.register(MaintenanceFeedback)
 class MaintenanceFeedbackAdmin(admin.ModelAdmin):
-    list_display = ('maintenance_request', 'rating', 'comments', 'created_at')
-    search_fields = ('maintenance_request__unit__number', 'comments')
+    list_display = ('maintenance_requests', 'rating', 'comments', 'created_at')
+    search_fields = ('maintenance_requests__unit__number', 'comments')
     list_filter = ('created_at', 'rating')
 @admin.register(LatePayment)
 class LatePaymentAdmin(admin.ModelAdmin):
