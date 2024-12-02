@@ -3,34 +3,32 @@
 {% block title %}قائمة المباني{% endblock %}
 
 {% block content %}
-<h1 class="mb-4">قائمة المباني</h1>
-<table class="table table-stried">
-  <thead>
+<h2 class="mb-4">قائمة المباني</h2>
+<a href="/buildings/create" class="btn btn-success mb-3">إضافة مبني جديد</a>
+<table class="table table-bordered table-striped">
+    <thead class="table-dark">
     <tr>
-      <th>#</th>
-      <th>اسم المبني</th>
-      <th>العنوان</th>
-      <th>عدد الوحدات</th>
-      <th>الإيجار الشهري</th>
-      <th>خيارات</th>
+        <th>إسم المبني</th>
+        <th>العنوان</th>
+        <th>عدد الوحدات</th>
+        <th>الوحدات المؤجرة</th>
+        <th>الإيرادات الشهرية</th>
+        <th>الإجراءات</th>
     </tr>
-  </thead>
-  <tbody>
+    </thead>
+    <tbody>
     {% for building in buildings %}
     <tr>
-      <th>{{ forloop.counter }}</th>
-      <td>{{ building.name }}</td>
-      <td>{{ building.address }}</td>
-      <td></td>
-      <td></td>
-      <td>
-        <a href="" class="btn btn-primary btn-sm">عرض</a>
-        <a href="" class="btn btn-warning btn-sm">تعديل</a>
-        <a href="" class="btn btn-danger btn-sm">حذف</a>
-      </td>
+        <td>{{ building.name }}</td>
+        <td>{{ building.address }}</td>
+        <td>{{ building.total_units }}</td>
+        <td>{{ building.rented_units }}</td>
+        <td>{{ building.monthly_income }}</td>
+        <td>
+            <a href="/buildings/{{ building.id }}/" class="btn btn-info btn-sm">عرض التفاصيل</a>
+        </td>
     </tr>
     {% endfor %}
-  </tbody>
+    </tbody>
 </table>
-<a href="" class="btn btn-success mt-3">إضافة مبني جديد</a>
 {% endblock %}

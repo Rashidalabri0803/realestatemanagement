@@ -16,12 +16,11 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav">
-                <li class="nav-item"><a class="nav-link" href="{% url 'building-list' %}">المباني</a></li>
-                <li class="nav-item"><a class="nav-link" href="{% url 'unit-list' %}">الوحدات</a></li>
+                <li class="nav-item"><a class="nav-link" href="/buildings/">المباني</a></li>
+                <li class="nav-item"><a class="nav-link" href="/units/">الوحدات</a></li>
                 <li class="nav-item"><a class="nav-link" href="">المستأجرين</a></li>
-                <li class="nav-item"><a class="nav-link" href="">العقود</a></li>
-                <li class="nav-item"><a class="nav-link" href="">الصيانة</a></li>
-                <li class="nav-item"><a class="nav-link" href="">الاشعارات</a>
+                <li class="nav-item"><a class="nav-link" href="/contracts/create/">إضافة عقد</a></li>
+                <li class="nav-item"><a class="nav-link" href="/payments/create/">تسجيل دفعة</a></li>
             </ul>
         </div>
         </div>
@@ -30,8 +29,8 @@
         {% block content %}
         {% endblock %}
     </div>
-    <footer class="text-center mt-4">
-            <p>جميع الحقوق محفوظة &copy; 2024</p>
+    <footer class="bg-dark text-white text-center py-3">
+            <p>نظام إدارة الإيجارات - جميع الخقوق محفوظة ٢٠٢٤ </p>
     </footer>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{% static 'js/main.js' %}"></script>

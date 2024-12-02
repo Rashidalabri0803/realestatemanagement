@@ -1,13 +1,12 @@
-{% extends 'rental_management/base.html' %}
+{% extends 'base.html' %}
 
-{% block title %}نموذج المبني{% endblock %}
+{% block title %}إضافة مبني{% endblock %}
 
 {% block content %}
-<h1 class="mb-4">{{ form.instance.id|default:"إضافة مبني جديد" }}</h1>
+<h2>إضافة مبني جديد</h2>
 <form method="post" enctype="multipart/form-data">
     {% csrf_token %}
     {{ form.as_p }}
     <button type="submit" class="btn btn-primary">حفظ</button>
-    <a href="{% url 'building_list' %}" class="btn btn-secondary">إلغاء</a>
 </form>
 {% endblock %}
