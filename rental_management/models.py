@@ -428,7 +428,7 @@ class MaintenanceRequest(AbstractBaseModel):
   )
 
   def __str__(self):
-    return f"طلب الصيانة: {self.unit.number}"
+    return f"طلب الصيانة: {self.unit.number} - {self.priority}"
 
   class Meta:
     verbose_name = _("طلب الصيانة")
@@ -439,7 +439,7 @@ class MaintenanceFeedback(AbstractBaseModel):
   maintenance_requests = models.OneToOneField(
     MaintenanceRequest,
     on_delete=models.CASCADE,
-    related_name="feedbacks",
+    related_name="feedback",
     verbose_name=_("طلب الصيانة"),
   )
   rating = models.PositiveIntegerField(
@@ -453,37 +453,12 @@ class MaintenanceFeedback(AbstractBaseModel):
   )
 
   def __str__(self):
-    return f"تقييم صيانة: {self.maintenance_requests.unit.number}"
+    return f"تقييم صيانة: {self.maintenance_requests.unit.number} - {self.rating}"
 
   class Meta:
     verbose_name = _("تقييم صيانة")
     verbose_name_plural = _("تقييمات الصيانة")
     ordering = ["-created_at"]
-
-class Report(AbstractBaseModel):
-  name = models.CharField(
-    max_length=200,
-    verbose_name=_("اسم التقرير"),
-  )
-  report_type = models.CharField(
-    max_length=100,
-    verbose_name = _("نوع التقرير"),
-  )
-  content = models.TextField(
-    verbose_name=_("محتوى التقرير"),
-  )
-  generated_at = models.DateTimeField(
-    auto_now_add=True,
-    verbose_name=_("تاريخ الإنشاء"),
-  )
-
-  def __str__(self):
-    return f"تقرير: {self.name}"
-
-  class Meta:
-    verbose_name = _("تقرير")
-    verbose_name_plural = _("التقارير")
-    ordering = ["-generated_at"]
 
 class LatePayment(AbstractBaseModel):
     invoice = models.OneToOneField(
@@ -507,12 +482,37 @@ class LatePayment(AbstractBaseModel):
       self.save()
 
     def __str__(self):
-        return f"غرامة - {self.invoice.contract.unit.number}"
+        return f"غرامة - {self.invoice.contract.unit.number} - {self.penalty}"
 
     class Meta:
         verbose_name = _("غرامة تأخير")
         verbose_name_plural = _("غرامات التأخير")
         ordering = ["-created_at"]
+        
+class Report(AbstractBaseModel):
+  name = models.CharField(
+    max_length=200,
+    verbose_name=_("اسم التقرير"),
+  )
+  report_type = models.CharField(
+    max_length=100,
+    verbose_name = _("نوع التقرير"),
+  )
+  content = models.TextField(
+    verbose_name=_("محتوى التقرير"),
+  )
+  generated_at = models.DateTimeField(
+    auto_now_add=True,
+    verbose_name=_("تاريخ الإنشاء"),
+  )
+
+  def __str__(self):
+    return f"تقرير: {self.name} - {self.report_type}"
+
+  class Meta:
+    verbose_name = _("تقرير")
+    verbose_name_plural = _("التقارير")
+    ordering = ["-generated_at"]
 
 class SystemSettings(AbstractBaseModel):
     key = models.CharField(
