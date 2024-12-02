@@ -139,13 +139,13 @@ class MaintenanceFeedbackForm(forms.ModelForm):
 
     def clean_rating(self):
         rating = self.cleaned_data.get('rating')
-        if not ( 1 <= rating => 5):
+        if not ( 1 <= rating <= 5):
             raise forms.ValidationError("التقييم يجب أن يكون بين 1 و 5")
         return rating
 
 class LatePaymentForm(forms.ModelForm):
     class Meta:
-        model = Payment
+        model = LatePayment
         fields = ['invoice', 'days_late', 'penalty']
         widgets = {
             'invoice': forms.Select(attrs={'class': 'form-control'}),

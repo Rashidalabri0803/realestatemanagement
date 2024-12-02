@@ -6,7 +6,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, filters, status
 from rest_framework.response import Response
 
-from .models import Building, Unit, Tenant, LeaseContract, Invoice, Payment, Reminder, Notification, MaintenanceRequest
+from .models import Building, Unit, Tenant, LeaseContract, Invoice, Payment, Reminder, Notification, MaintenanceRequest, SystemSettings
 from .forms import BuildingForm, UnitForm, TenantForm, LeaseContractForm, InvoiceForm, PaymentForm, ReminderForm, NotificationForm, MaintenanceRequestForm
 from .serializers import BuildingSerializer, UnitSerializer, TenantSerializer, LeaseContractSerializer, InvoiceSerializer, PaymentSerializer, ReminderSerializer, NotificationSerializer, MaintenanceRequestSerializer, MaintenanceFeedback, LatePaymentSerializer, ReportSerializer, SystemSettingsSerializer
 
