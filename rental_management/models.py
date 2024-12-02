@@ -39,20 +39,22 @@ class AbstractBaseModel(models.Model):
 
 class Building(AbstractBaseModel):
     name = models.CharField(
-        max_length=255,
+        max_length=200,
+        unique=True,
         verbose_name=_("اسم المبنى"),
     )
-    address = models.CharField(
-        max_length=255,
+    address = models.TextField(
         verbose_name=_("عنوان المبنى"),
     )
     description = models.TextField(
         blank=True,
-        verbose_name=_("وصف المبنى"),
+        null=True,
+        verbose_name=_("وصف"),
     )
     image = models.ImageField(
-        upload_to="buildings/",
+        upload_to="building_images/",
         blank=True,
+        null=True,
         verbose_name=_("صورة المبنى"),
     )
 
@@ -64,7 +66,7 @@ class Building(AbstractBaseModel):
 
     def rented_percentage(self):
         total = self.total_units()
-        return round(self.rented_units() / total) * 100 if total > 0 else 0
+        return (self.rented_units() / total) * 100 if total > 0 else 0
 
     def monthly_income(self):
         return sum(invoice.amount for invoice in Invoice.objects.filter(contract__unit__building=self, is_paid=True))
@@ -89,7 +91,8 @@ class Unit(AbstractBaseModel):
     )
     UNIT_STATUS_CHOICES = (
         ('available', _('متاحة')),
-        ('rented', _('مستأجرة')),
+        ('rented', _('مؤجرة')),
+        ('maintenance', _('تحت الصيانة'))
         ('reserved', _('محجوزة')),
     )
     building = models.ForeignKey(
@@ -131,7 +134,7 @@ class Unit(AbstractBaseModel):
         return self.status == 'available'
 
     def __str__(self):
-        return f"{self.get_unit_type_display()} - {self.building.name} -  {self.number}"
+        return f"{self.get_unit_type_display()} - {self.number}"
 
     class Meta:
         verbose_name = _("وحدة")
@@ -290,37 +293,39 @@ class Invoice(AbstractBaseModel):
         indexes = [
             models.Index(fields=["is_paid", "due_date"]),
         ]
-      
-class Notification(AbstractBaseModel):
-    message = models.TextField(
-        verbose_name=_("الرسالة"),
-    )
-    is_read = models.BooleanField(
-        default=False,
-        verbose_name=_("مقروء"),
-    )
-    priority = models.CharField(
-        max_length=50,
-        choices=(
-            ('low', _('منخفضة')),
-            ('medium', _('متوسطة')),
-            ('high', _('عالية')),
-        ),
-        default='low',
-        verbose_name=_("الأولوية"),
-    )
 
-    def mark_as_read(self):
-        self.is_read = True
-        self.save()
+class Payment(AbstractBaseModel):
+    contract = models.ForeignKey(
+        LeaseContract,
+        on_delete=models.CASCADE,
+        related_name="payments",
+        verbose_name=_("العقد"),
+    )
+    amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        verbose_name=_("المبلغ"),
+    )
+    payment_date = models.DateField(
+        default=now,
+        verbose_name=_("تاريخ الدفع"),
+    )
+    description = models.TextField(
+        blank=True,
+        null=True,
+        verbose_name=_("الوصف"),
+    )
 
     def __str__(self):
-        return f"إشعار: {self.message[:20]}"
+        return f"دفع: {self.amount} للعقد {self.contract}"
 
     class Meta:
-        verbose_name = _("إشعار")
-        verbose_name_plural = _("الإشعارات")
-        ordering = ["-created_at"]
+        verbose_name = _("دفع")
+        verbose_name_plural = _("المدفوعات")
+        ordering = ["-payment_date"]
+        indexes = [
+            models.Index(fields=["payment_date"]),
+        ]
 
 class Reminder(AbstractBaseModel):
   tenant = models.ForeignKey(
@@ -352,12 +357,46 @@ class Reminder(AbstractBaseModel):
       self.save()
 
   def __str__(self):
-    return f"تذكير: {self.tenant.full_name}"
+    return f"تذكير للمستأجر: {self.tenant.full_name}"
 
   class Meta:
     verbose_name = _("تذكير")
     verbose_name_plural = _("التذكيرات")
     ordering = ["-created_at"]
+    indexes = [
+        models.Index(fields=["is_sent"]),
+    ]
+      
+class Notification(AbstractBaseModel):
+    message = models.TextField(
+        verbose_name=_("الرسالة"),
+    )
+    is_read = models.BooleanField(
+        default=False,
+        verbose_name=_("مقروء"),
+    )
+    priority = models.CharField(
+        max_length=50,
+        choices=(
+            ('low', _('منخفضة')),
+            ('medium', _('متوسطة')),
+            ('high', _('عالية')),
+        ),
+        default='low',
+        verbose_name=_("الأولوية"),
+    )
+
+    def mark_as_read(self):
+        self.is_read = True
+        self.save()
+
+    def __str__(self):
+        return f"إشعار: {self.message[:20]}"
+
+    class Meta:
+        verbose_name = _("إشعار")
+        verbose_name_plural = _("الإشعارات")
+        ordering = ["-created_at"]
 
 class MaintenanceRequest(AbstractBaseModel):
   unit = models.ForeignKey(
