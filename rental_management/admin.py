@@ -3,9 +3,10 @@ from django.contrib import admin
 from .models import (
     Building,
     Invoice,
-    LatePayment,
+    Payment,
     LeaseContract,
     MaintenanceFeedback,
+    LatePayment,
     MaintenanceRequest,
     Notification,
     Reminder,
@@ -64,6 +65,12 @@ class InvoiceAdmin(admin.ModelAdmin):
     list_display = ('contract', 'issue_date', 'due_date', 'amount', 'is_paid', 'late_fee', 'is_overdue')
     search_fields = ('contract__tenant__full_name', 'contract__unit__number')
     list_filter = ('due_date', 'is_paid')
+
+@admin.register(Payment)
+class PaymentAdmin(admin.ModelAdmin):
+    list_display = ('contract', 'amount', 'payment_date', 'description')
+    search_fields = ('contract__tenant__full_name', 'contract__unit__number')
+    list_filter = ('payment_date',)
   
 @admin.register(Reminder)
 class ReminderAdmin(admin.ModelAdmin):
@@ -89,6 +96,7 @@ class MaintenanceFeedbackAdmin(admin.ModelAdmin):
     list_display = ('maintenance_requests', 'rating', 'comments', 'created_at')
     search_fields = ('maintenance_requests__unit__number', 'comments')
     list_filter = ('created_at', 'rating')
+
 @admin.register(LatePayment)
 class LatePaymentAdmin(admin.ModelAdmin):
     list_display = ('invoice', 'days_late', 'penalty', 'created_at')
