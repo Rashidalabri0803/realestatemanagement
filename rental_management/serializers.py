@@ -1,5 +1,7 @@
 from rest_framework import serializers
-from .models import Building, Unit,Tenant, LeaseContract, Invoice, Payment, Reminder, Notification, MaintenanceRequest, MaintenanceFeedback, LatePayment, Report, SystemSettings
+
+from .models import Building, Unit, Tenant, LeaseContract, Invoice, Payment, Reminder, Notification, MaintenanceRequest, MaintenanceFeedback, LatePayment, Report, SystemSettings
+
 
 class BuildingSerializer(serializers.ModelSerializer):
     total_units = serializers.IntegerField(read_only=True)
@@ -93,7 +95,7 @@ class PaymentSerializer(serializers.ModelSerializer):
       'contract',
       'amount',
       'payment_date',
-      'descripition',
+      'description',
     ]
 
 class ReminderSerializer(serializers.ModelSerializer):
@@ -135,33 +137,32 @@ class MaintenanceFeedbackSerializer(serializers.ModelSerializer):
   class Meta:
     model = MaintenanceFeedback
     fields = [
-      'id',
-      'mainteance_request',
-      'rating',
-      'comments',
-      'created_at',
+        'id',
+        'maintenance_requests',
+        'rating',
+        'comments',
+        'created_at',
     ]
 
 class LatePaymentSerializer(serializers.ModelSerializer):
   class Meta:
     model = LatePayment
     fields = [
-      'id',
-      'invoice',
-      'days_late',
-      'penalty',
-      'created_at',
+        'id',
+        'invoice',
+        'days_late',
+        'penalty',
     ]
 
 class ReportSerializer(serializers.ModelSerializer):
   class Meta:
     model = Report
     fields = [
-      'id',
-      'name',
-      'report_type',
-      'content',
-      'generated_at',
+        'id',
+        'name',
+        'report_type',
+        'content',
+        'generated_at',
     ]
 
 class SystemSettingsSerializer(serializers.ModelSerializer):

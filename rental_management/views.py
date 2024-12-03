@@ -6,9 +6,9 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, filters, status
 from rest_framework.response import Response
 
-from .models import Building, Unit, Tenant, LeaseContract, Invoice, Payment, Reminder, Notification, MaintenanceRequest, SystemSettings
+from .models import Building, Unit, Tenant, LeaseContract, Invoice, Payment, Reminder, Notification, MaintenanceRequest, SystemSettings, MaintenanceFeedback, LatePayment, Report
 from .forms import BuildingForm, UnitForm, TenantForm, LeaseContractForm, InvoiceForm, PaymentForm, ReminderForm, NotificationForm, MaintenanceRequestForm
-from .serializers import BuildingSerializer, UnitSerializer, TenantSerializer, LeaseContractSerializer, InvoiceSerializer, PaymentSerializer, ReminderSerializer, NotificationSerializer, MaintenanceRequestSerializer, MaintenanceFeedback, LatePaymentSerializer, ReportSerializer, SystemSettingsSerializer
+from .serializers import BuildingSerializer, UnitSerializer, TenantSerializer, LeaseContractSerializer, InvoiceSerializer, PaymentSerializer, ReminderSerializer, NotificationSerializer, MaintenanceRequestSerializer, MaintenanceFeedbackSerializer, LatePaymentSerializer, ReportSerializer, SystemSettingsSerializer
 
 class BuildingListView(ListView):
     model = Building
@@ -115,7 +115,7 @@ class InvoiceViewSet(viewsets.ModelViewSet):
     serializer_class = InvoiceSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     search_fields = ['contract__tenant__full_name', 'contract__unit__number']
-    filterset_fields = ['is_paide', 'due_date']
+    filterset_fields = ['is_paid', 'due_date']
 
 class PaymentViewSet(viewsets.ModelViewSet):
     queryset = Payment.objects.filter(is_deleted=False).select_related('contract')
@@ -146,21 +146,21 @@ class NotificationViewSet(viewsets.ModelViewSet):
     filterset_fields = ['is_read', 'priority']
 
 class MaintenanceFeedbackViewSet(viewsets.ModelViewSet):
-    queryset = MaintenanceRequest.objects.filter(is_deleted=False).select_related('maintenance_request')
-    serializer_class = MaintenanceFeedback
+    queryset = MaintenanceFeedback.objects.filter(is_deleted=False)
+    serializer_class = MaintenanceFeedbackSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
-    search_fields = ['maintenance_request__unit__number', 'comments']
+    search_fields = ['maintenance_requests__unit__number', 'comments']
     filterset_fields = ['rating']
 
 class LatePaymentViewSet(viewsets.ModelViewSet):
-    queryset = Payment.objects.filter(is_deleted=False).select_related('invoce', 'invoce__contract')
+    queryset = LatePayment.objects.filter(is_deleted=False).select_related('invoice', 'invoice__contract')
     serializer_class = LatePaymentSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
-    search_fields = ['contract__tenant__full_name', 'invoce__contract__unit__number']
+    search_fields = ['invoice__contract__tenant__full_name', 'invoice__contract__unit__number']
     filterset_fields = ['days_late']
 
 class ReportViewSet(viewsets.ModelViewSet):
-    queryset = Payment.objects.filter(is_deleted=False)
+    queryset = Report.objects.filter(is_deleted=False)
     serializer_class = ReportSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     search_fields = ['name', 'report_type']

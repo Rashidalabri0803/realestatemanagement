@@ -40,7 +40,7 @@ class AbstractBaseModel(models.Model):
         abstract = True
 
 class UserProfile(AbstractBaseModel):
-    user = models.OneToOneFields(
+    user = models.OneToOneField(
         User,
         on_delete=models.CASCADE,
         related_name="profile",
