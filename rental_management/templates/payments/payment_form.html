@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+
+{% block title %}تسجيل دفعة{% endblock %}
+
+{% block content %}
+<h2 class="mb-4"تسجيل دفعة جديدة</h2>
+<form method="POST">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button type="submit" class="btn btn-primary">تسجيل</button>
+</form>
+{% endblock %}

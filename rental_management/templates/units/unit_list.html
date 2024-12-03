@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+
+{% block title %}قائمة الوحدات{% endblock %}
+
+{% block content %}
+    <h2>قائمة الوحدات</h2>
+    <a href="/units/create/" class="btn btn-primary">إضافة وحدة جديدة</a>
+    <table class="table table-bordered table-striped">
+        <thead class="table-dark">
+            <tr>
+                <th>رقم الوحدة</th>
+                <th>نوع الوحدة</th>
+                <th>المبني</th>
+                <th>الحالة</th>
+                <th>الإيجار الشهري</th>
+                <th>الإجراءات</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for unit in units %}
+                <tr>
+                    <td>{{ unit.number }}</td>
+                    <td>{{ unit.git_unit_type_display }}</td>
+                    <td>{{ unit.building.name }}</td>
+                    <td>{{ unit.get_status_display }}</td>
+                    <td>{{ unit.monthly_rent }}</td>
+                    <td>
+                        <a href="/units/{{unit.id}}/" class="btn btn-info btn-sm">عرض التفاصيل</a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

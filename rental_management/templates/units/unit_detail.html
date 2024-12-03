@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block title %}تفاصيل الوحدة{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">تفاصيل الوحدة: {{ unit.number }}</h2>
+<p>
+  <strong>نوع الوحدة:</strong> {{ unit.gei_unit_type_display }}<br>
+  <strong>الحالة:</strong> {{ unit.get_status_display }}<br>
+  <strong>المبني:</strong> {{ unit.building.name }}<br>
+  <strong>المساحة:</strong> {{ unit.area }} متر مربع<br>
+  <strong>الإيجار الشهري:</strong> {{ unit.monthly_rent }} ريال
+</p>
+<a href="/units/" class="btn btn-secondary">رجوع</a>
+{% endblock %}
