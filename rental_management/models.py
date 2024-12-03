@@ -214,6 +214,7 @@ class Tenant(AbstractBaseModel):
         return self.contracts.filter(is_active=True, is_deleted=False).count()
 
     def total_payments(self):
+        
         return sum(payment.amount for payment in self.payments.all())
 
     def __str__(self):
