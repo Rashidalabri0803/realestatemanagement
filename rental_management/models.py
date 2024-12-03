@@ -1,8 +1,10 @@
-from django.db import models
-from django.utils.translation import gettext_lazy as _
-from django.utils.timezone import now
-from django.contrib.auth.models import User
 from datetime import timedelta
+
+from django.contrib.auth.models import User
+from django.db import models
+from django.utils.timezone import now
+from django.utils.translation import gettext_lazy as _
+
 
 class AbstractBaseModel(models.Model):
     created_by = models.ForeignKey(
@@ -36,6 +38,42 @@ class AbstractBaseModel(models.Model):
 
     class Meta:
         abstract = True
+
+class UserProfile(AbstractBaseModel):
+    user = models.OneToOneFields(
+        User,
+        on_delete=models.CASCADE,
+        related_name="profile",
+        verbose_name=_("المستخدم"),
+    )
+    phone_number = models.CharField(
+        max_length=20,
+        unique=True,
+        verbose_name=_("رقم الهاتف"),
+    )
+    address = models.TextField(
+        blank=True,
+        null=True,
+        verbose_name=_("العنوان"),
+    )
+    role = models.CharField(
+        max_length=50,
+        choices=[
+            ("admin", _("مدير")),
+            ("staff", _("موظف")),
+            ("tenant", _("مستأجر")),
+        ],
+        default="tenant",
+        verbose_name=_("الدور"),
+    )
+
+    def __str__(self):
+        return f"{self.user.username} - {self.get_role_display()}"
+
+    class Meta:
+        verbose_name = _("ملف المستخدم")
+        verbose_name_plural = _("ملفات المستخدمين")
+        ordering = ["user__username"]
 
 class Building(AbstractBaseModel):
     name = models.CharField(
