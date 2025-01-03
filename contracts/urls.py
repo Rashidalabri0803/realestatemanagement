@@ -1,8 +1,7 @@
-from django.urls import path
-from . import views
+from rest_framework.routers import DefaultRouter
+from .views import LeasContractViewSet
 
-urlpatterns = [
-    path('', views.contract_list, name='contract_list'),
-    path('<int:pk>/', views.contract_detail, name='contract_detail'),
-    path('create/', views.contract_create, name='contract_create'),
-]
+router = DefaultRouter()
+router.register(r'contracts', LeasContractViewSet)
+
+urlpatterns = router.urls

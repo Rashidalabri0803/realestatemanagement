@@ -1,8 +1,8 @@
 from django.contrib import admin
-from .models import Contract
+from .models import LeasContract
 
-@admin.register(Contract)
-class ContractAdmin(admin.ModelAdmin):
-    list_display = ('property', 'tenant_name', 'start_date', 'end_date')
-    list_filter = ('start_date', 'end_date')
-    search_fields = ('tenant_name', 'property__name')
+@admin.register(LeasContract)
+class LeasContractAdmin(admin.ModelAdmin):
+    list_display = ['tenant', 'property', 'start_date', 'end_date', 'monthly_rent', 'is_active']
+    list_filter = ['is_active', 'start_date']
+    search_fields = ['tenant__name', 'property__name']

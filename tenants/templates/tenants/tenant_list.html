@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block title %}قائمة المستأجرين{% endblock %}
+
+{% block content %}
+<h1 class="text-centre my-4">قائمة المستأجرين</h1>
+<table class="table table-bordered">
+  <thead>
+    <tr>
+      <th>الاسم</th>
+      <th>رقم الهاتف</th>
+      <th>البريد الإلكتروني</th>
+      <th>العنوان</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for tenant in tenants %}
+    <tr>
+      <td>{{ tenant.name }}</td>
+      <td>{{ tenant.phone }}</td>
+      <td>{{ tenant.email }}</td>
+      <td>{{ tenant.address }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

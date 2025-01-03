@@ -1,7 +1,7 @@
 from rest_framework.routers import DefaultRouter
-from .views import PropertyViewSet
+from .views import TenantViewSet
 
 router = DefaultRouter()
-router.register(r'properties', PropertyViewSet)
+router.register(r'tenants', TenantViewSet)
 
 urlpattens = router.urls
