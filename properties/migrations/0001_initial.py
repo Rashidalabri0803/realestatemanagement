@@ -12,17 +12,17 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='Tenant',
+            name='Property',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=200, verbose_name='الاسم')),
-                ('phone', models.CharField(max_length=15, verbose_name='رقم الهاتف')),
-                ('email', models.EmailField(max_length=254, unique=True, verbose_name='البريد الإلكتروني')),
+                ('name', models.CharField(max_length=100, verbose_name='اسم العقار')),
+                ('propert_type', models.CharField(choices=[('apartment', 'شقة'), ('office', 'مكتب'), ('shop', 'محل')], max_length=10, verbose_name='نوع العقار')),
+                ('description', models.TextField(verbose_name='الوصف')),
                 ('address', models.TextField(verbose_name='العنوان')),
             ],
             options={
-                'verbose_name': 'مستأجر',
-                'verbose_name_plural': 'المستأجرون',
+                'verbose_name': 'عقار',
+                'verbose_name_plural': 'العقارات',
             },
         ),
     ]
