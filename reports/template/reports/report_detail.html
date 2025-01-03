@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+
+{% block title %}تفاصيل التقرير{% endblock %}
+
+{% block content %}
+<h2>{{ report.title }}</h2>
+<p><strong>تاريخ الإنشاء:</strong> {{ report.created_at }}</p>
+<p><strong>المحتوى:</strong></p>
+<p>{{ report.content }}</p>
+<a href="{% url 'reports:list' %}" class="btn btn-primary">عودة إلى قائمة التقارير</a>
+{% endblock %}

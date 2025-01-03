@@ -1,7 +1,9 @@
-from django.shortcuts import render, redirect
-from django.contrib.auth import login, logout, authenticate
+from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
-from .forms import CustomUserCreationForm, CustomAuthenticatioForm
+from django.shortcuts import redirect, render
+
+from .forms import CustomUserCreationForm
+
 
 def register(request):
     if request.method == 'POST':
@@ -13,19 +15,3 @@ def register(request):
     else:
         form = CustomUserCreationForm()
     return render(request, 'accounts/register.html', {'form': form})
-
-def user_login(request):
-    if request.method == 'POST':
-        form = CustomAuthenticatioForm(data=request.POST)
-        if form.is_valid():
-            user = form.get_user()
-            login(request, user)
-            return redirect('home')
-    else:
-        form = CustomAuthenticatioForm()
-    return render(request, 'accounts/login.html', {'form': form})
-
-@login_required
-def user_logout(request):
-    logout(request)
-    return redirect('login')

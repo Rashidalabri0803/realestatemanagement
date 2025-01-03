@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block title %}قائمة الوحدات{% endblock %}
+
+{% block content %}
+<h2>قائمة الوحدات</h2>
+<table class="table">
+  <thead>
+    <tr>
+      <th>إسم الوحدة</th>
+      <th>نوع الوحدة</th>
+      <th>السعر</th>
+      <th>مشغولة</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for property in properties %}
+    <tr>
+      <td>{{ property.name }}</td>
+      <td>{{ property.get_type_display }}</td>
+      <td>{{ property.price }}</td>
+      <td>{% if property.occupied %}نعم{% else %}لا{% endif %}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
